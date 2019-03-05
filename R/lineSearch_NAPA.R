@@ -16,6 +16,8 @@
 #' }
 # '
 #' lineSearch_NAPA(x_curr = c(.015,-.015), dk = c(-0.2,0.2), func=func2)
+#' 
+#' lineSearch_NAPA(x_curr = c(2.05), dk = c(-0.2), func=function(x) { -prod(dpois(c(1,2,3), x))})
 lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, lineSearchMaxSteps = 100, ...) {
   delta <- 0.5
   if(is.nan(t(dk)%*%dk)) warning("WARNING: direction vector dk is NaN")
@@ -25,7 +27,7 @@ lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, lineSearchMaxSteps =
   x_next <- x_curr + dk
   f_next <- func(x_next, ...)
   gg <- NULL
-  if(is.null(grad_Fx)) gg <- abs(grad_FD(func=func, x_val=x_curr, ...) %*% dk)
+  if(is.null(grad_Fx)) gg <- abs(grad_FD_NAPA(func=func, x_val=x_curr, ...) %*% dk)
   else gg <- grad_Fx %*% dk
     
   lineSearchSteps <- 0

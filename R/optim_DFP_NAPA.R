@@ -1,16 +1,3 @@
-#' @description Adds new element to top of list, removing bottom elements if new length is greater tham M
-#' @param new_el   element to add to top of list
-#' @param old_list list to append new_el to
-#' @param M        maximum size of list (will truncate by removing bottom if length is greater than M)
-updateList <- function(new_el, old_list = list(), M = 1) {
-  old_list <- c(list(new_el), old_list) 
-  if(length(old_list) > M) {
-    old_list <- old_list[1:M]
-  }
-  return(old_list)
-}
-
-
 # goal: implement DFP algorithm
 # 0) initial guess xk = starts, initial hessian Bk = Ipxp
 # 1) solve for pk: Bk * pk = -grad f(xk) (use inverse(Bk), Ipxp in first iteration, otherwise from step 4)
@@ -104,7 +91,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
     if(VERBOSE >= 2) if(is.nan(f_list[[1]])) warning("WARNING: f_list[[1]] is NaN")
     x_list <- updateList(x_next, x_list, M = 1+length(x_list))
     if(VERBOSE >= 2) if(is.nan(t(x_list[[1]])%*%x_list[[1]])) warning("WARNING: x_list[[1]] is NaN")
-    print(paste("x_curr=", x_list[[1]]))
+    if(VERBOSE >= 2) print(paste("x_curr=", x_list[[1]]))
     s_list <- updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list))
     if(VERBOSE >= 2) if(is.nan(t(s_list[[1]])%*%s_list[[1]])) warning("WARNING: s_list[[1]] is NaN")
     g_list <- updateList(grad_FD_NAPA(func = func, x_val = x_next, ...), g_list, M = 1+length(g_list))
