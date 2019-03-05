@@ -22,6 +22,7 @@ updateList <- function(new_el, old_list = list(), M = 1) {
 #    q = delta grad f(x) = grad f(x_next) - grad f(x_curr)
 #    iB_next + p %*% t(p) / c(t(p) %*% q) - iB %*% q %*% t(q) %*% iB / c(t(q) %*% iB %*% q)
 # 5) stop algorithm if ||grad (f(xnext))|| is close enough to zero, otherwise goto step 1
+#' @title optim_DFP_NAPA
 #' @description optim_DFP_NAPA non-arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm
 #' @param starts starting values for function
 #' @param func   function to optimize

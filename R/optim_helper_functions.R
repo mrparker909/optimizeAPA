@@ -1,3 +1,4 @@
+#' @title updateList
 #' @description Adds new element to top of list, removing bottom elements if new length is greater tham M
 #' @param new_el   element to add to top of list
 #' @param old_list list to append new_el to
