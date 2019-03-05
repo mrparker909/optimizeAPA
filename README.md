@@ -1,5 +1,7 @@
 ---
-output: rmarkdown::html_document
+output: 
+  html_document:
+    keep_md: true
 ---
 
 # optimizeAPA
@@ -11,7 +13,8 @@ The APA in this package is achieved using the packages Rmpfr and gmp.
 
 # Installation
 
-```{r eval=FALSE}
+
+```r
 install.packages("devtools")
 devtools::install_github("mrparker909/optimizeAPA")
 ```
@@ -30,7 +33,8 @@ devtools::install_github("mrparker909/optimizeAPA")
 
 ## optimDFP_APA
 
-```{r warning=FALSE, message=FALSE}
+
+```r
 library(optimizeAPA)
 
 # notice that the function must be made using APA arithmetic from the package Rmpfr
@@ -48,11 +52,39 @@ quadratic <- function(x, center, precBits=64) {
 # APA optimization
 optim_DFP_APA(starts=0, func=quadratic, center=10, precBits = 64)
 ```
+
+```
+## $x
+## 'mpfrMatrix' of dim(.) =  (1, 1) of precision  64   bits 
+##      [,1]                 
+## [1,] 10.000000000000000000
+## 
+## $f
+## 'mpfrMatrix' of dim(.) =  (1, 1) of precision  64   bits 
+##      [,1]                 
+## [1,] 0.0000000000000000000
+## 
+## $grad
+## 1 'mpfr' number of precision  64   bits 
+## [1] 0
+## 
+## $inv_Hessian
+## 'mpfrMatrix' of dim(.) =  (1, 1) of precision  64   bits 
+##      [,1]                  
+## [1,] 0.50000000000226056695
+## 
+## $steps
+## [1] 3
+## 
+## $converged
+## [1] TRUE
+```
 The minimum is attained at $x_{min}=10$, where the function is found to be $f(x_{min})=0$, and the gradient is $grad(f(x_{min})) = 0$.
 
 We can compare these results to the optim_DFP_NAPA results, and to the regular optim results: 
 
-```{r}
+
+```r
 # function we would like to optimize:
 quadratic_NAPA <- function(x, center) {
   (x-center)^2
@@ -60,7 +92,55 @@ quadratic_NAPA <- function(x, center) {
 
 # NAPA optimization
 optim_DFP_NAPA(starts=0, func=quadratic_NAPA, center=10)
+```
+
+```
+## $x
+##      [,1]
+## [1,]   10
+## 
+## $f
+##      [,1]
+## [1,]    0
+## 
+## $grad
+## [1] 0
+## 
+## $inv_Hessian
+##      [,1]
+## [1,]  0.5
+## 
+## $steps
+## [1] 3
+## 
+## $converged
+## [1] TRUE
+```
+
+```r
 optim(par=0, fn=quadratic_NAPA, hessian=TRUE, method="BFGS", center=10)
+```
+
+```
+## $par
+## [1] 10
+## 
+## $value
+## [1] 2.839899e-29
+## 
+## $counts
+## function gradient 
+##       11        3 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL
+## 
+## $hessian
+##      [,1]
+## [1,]    2
 ```
 
 It can be desirable to retain the convergence path for diagnosis and visualization purposes. This can be done easily with both the APA and NAPA version of the optimization algorithm:
