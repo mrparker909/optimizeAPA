@@ -1,3 +1,4 @@
+#' @description line searching algorithm used inside non-APA optimization algorithms.
 #' @param x_curr starting x value
 #' @param func function to perform line search on
 #' @param dk direction vector to search along

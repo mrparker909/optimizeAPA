@@ -23,14 +23,15 @@ updateList <- function(new_el, old_list = list(), M = 1) {
 #    iB_next + p %*% t(p) / c(t(p) %*% q) - iB %*% q %*% t(q) %*% iB / c(t(q) %*% iB %*% q)
 # 5) stop algorithm if ||grad (f(xnext))|| is close enough to zero, otherwise goto step 1
 #' @description optim_DFP_NAPA non-arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm
-#' @param starts
-#' @param func
-#' @param tolerance
-#' @param maxSteps
-#' @param lineSearchMaxSteps
-#' @param keepValues
-#' @param VERBOSE
-#' @param ...
+#' @param starts starting values for function
+#' @param func   function to optimize
+#' @param tolerance tolerance for determining stopping condition (how close to zero is considered small enough for the gradient). Note that smaller tolerance may require much larger maxSteps and lineSearchMaxSteps.
+#' @param maxSteps maximum number of iterations for the optimization algorithm
+#' @param lineSearchMaxSteps maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).
+#' @param keepValues if TRUE will return all visited values during the optimization, rather than only the final values.
+#' @param VERBOSE integer number, if greater than 0 will provide some console output during the optimization process
+#' @param ... extra parameters passed on to func
+#' @export
 #' @examples 
 #' # (1D example, compared against stats::optim)
 #' optim_DFP_NAPA(15, func=function(x){(x-10)^2}, maxSteps = 1000, tolerance = 10^-6)
@@ -60,7 +61,6 @@ updateList <- function(new_el, old_list = list(), M = 1) {
 #' op1 <- optim_DFP_NAPA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, tolerance=10^-6)
 #' op2 <- optim(par = starts2D, fn = fun2D, hessian = TRUE, method="BFGS", xdat=xdat2D, ydat=ydat2D)
 optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, VERBOSE=0, ...) {
-
   # 0) initial guess
   xk  <- starts
   Ix  <- diag(rep(1, times=length(xk)))
@@ -70,7 +70,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
   # initialize lists
   x_list  <- updateList(new_el = xk)
   f_list  <- updateList(new_el = func(xk, ...))
-  g_list  <- updateList(new_el = grad_FD(func = func, x_val = xk, ...))
+  g_list  <- updateList(new_el = grad_FD_NAPA(func = func, x_val = xk, ...))
   
   # B_list  <- updateList(new_el = Bk)
   iB_list <- updateList(new_el = iBk)
@@ -106,7 +106,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
     print(paste("x_curr=", x_list[[1]]))
     s_list <- updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list))
     if(VERBOSE >= 2) if(is.nan(t(s_list[[1]])%*%s_list[[1]])) warning("WARNING: s_list[[1]] is NaN")
-    g_list <- updateList(grad_FD(func = func, x_val = x_next, ...), g_list, M = 1+length(g_list))
+    g_list <- updateList(grad_FD_NAPA(func = func, x_val = x_next, ...), g_list, M = 1+length(g_list))
     if(VERBOSE >= 2) if(is.nan(t(g_list[[1]])%*%g_list[[1]])) warning("WARNING: g_list[[1]] is NaN")
     y_list <- updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list))
     if(VERBOSE >= 2) if(is.nan(t(y_list[[1]])%*%y_list[[1]])) warning("WARNING: y_list[[1]] is NaN")
