@@ -11,7 +11,7 @@
 # 5) stop algorithm if ||grad (f(xnext))|| is close enough to zero, otherwise goto step 1
 #' @title optim_DFP_APA
 #' @description optim_DFP_APA arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm. The function func must take precBits as an arguement, to inform Rmpfr of the precision.
-#' @param starts starting values for function
+#' @param starts starting values for function parameters
 #' @param func   function to optimize, first argument is a vector containing the parameters to be optimized over. Must also take as argument precBits.
 #' @param precBits precision bits for determining stopping condition (how close to zero is considered small enough for the gradient). Note that larger precBits may require much larger maxSteps and lineSearchMaxSteps.
 #' @param maxSteps maximum number of iterations for the optimization algorithm
@@ -113,13 +113,16 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
     if(VERBOSE >= 2) print(paste("x_curr =", format(x_list[[1]])))
     s_list <- updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list))
     if(VERBOSE >= 2) if(is.nan(t(s_list[[1]])%*%s_list[[1]])) warning("WARNING: s_list[[1]] is NaN")
-    g_list <- updateList(grad_FD_APA(func = func, x_val = x_next, precBits=precBits, stepMod=steps, VERBOSE=VERBOSE, ...), g_list, M = 1+length(g_list))
+    
+    # calculate gradient:
+    g_next <- grad_FD_APA(func = func, x_val = x_next, precBits=precBits, stepMod=steps, VERBOSE=VERBOSE, ...)
+    g_list <- updateList(g_next, g_list, M = 1+length(g_list))
     if(VERBOSE >= 2) if(is.nan(t(g_list[[1]])%*%g_list[[1]])) warning("WARNING: g_list[[1]] is NaN")
     y_list <- updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list))
     if(VERBOSE >= 2) if(is.nan(t(y_list[[1]])%*%y_list[[1]])) warning("WARNING: y_list[[1]] is NaN")
     
     if(sqrt(t(y_list[[1]])%*%y_list[[1]]) < Rmpfr::mpfr(0.5, precBits)^(precBits-1)) {
-      warning("WARNING: difference in gradients is smaller than precision. Consider using higher precision by increasing precBits.")
+      warning("WARNING: difference in gradients is smaller than precision. Maybe use higher precision by increasing precBits?")
       converged=TRUE
     }
     # 4) calculate iBk, inverse approximate Hessian
@@ -128,9 +131,11 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
     s <- s_list[[1]]
     iB <- iB_list[[1]]
     
-    iB_next <- iB + (s %*% t(s)) / c(t(s) %*% y) - (iB %*% y %*% t(y) %*% iB) / c(t(y) %*% iB %*% y)
+    iB_next <- NULL
     if(t(y)%*%y==0 | t(s)%*%s==0) {
       iB_next <- iB_list[[1]]
+    } else {
+      iB_next <- iB + (s %*% t(s)) / c(t(s) %*% y) - (iB %*% y %*% t(y) %*% iB) / c(t(y) %*% iB %*% y)
     }
     
     if(any(is.na(iB_next))) { 
@@ -163,7 +168,12 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
   }
   
   if(steps >= maxSteps) {
-    stop("ERROR: exceeded maxSteps, is maxSteps too small?")
+    warning("WARNING: exceeded maxSteps, is maxSteps too small?")
+    if(keepValues) {
+      return(list(x=x_list, f=f_list, grad=g_list, inv_Hessian=iB_list, steps=steps, converged=converged))
+    } else {
+      return(list(x=x_list[[1]], f=f_list[[1]], grad=g_list[[1]], inv_Hessian=iB_list[[1]], steps=steps, converged=converged))
+    }
   }
   
   if(keepValues) {

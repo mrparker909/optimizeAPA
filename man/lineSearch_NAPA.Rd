@@ -32,4 +32,6 @@ func2 <- function(par, centerx=0, centery=0) {
   (par[1]-centerx)^2+(par[2]-centery)^2
 }
 lineSearch_NAPA(x_curr = c(.015,-.015), dk = c(-0.2,0.2), func=func2)
+
+lineSearch_NAPA(x_curr = c(2.05), dk = c(-0.2), func=function(x) { -prod(dpois(c(1,2,3), x))})
 }

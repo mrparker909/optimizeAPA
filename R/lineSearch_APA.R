@@ -28,8 +28,9 @@
 #'  })
 lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=0, lineSearchMaxSteps = 100, VERBOSE=0, ...) {
   require(Rmpfr)
-  delta <- Rmpfr::mpfr(0.5, precBits)*10^(-stepMod)
-  alpha <- Rmpfr::mpfr(0.5, precBits)*10^(-1-log(stepMod))
+  ten <- Rmpfr::mpfr(10, precBits)
+  delta <- Rmpfr::mpfr(0.5, precBits)*ten^(-stepMod)
+  alpha <- Rmpfr::mpfr(0.5, precBits)*ten^(-1-log(stepMod))
   x_curr <- Rmpfr::mpfr(x_curr, precBits) 
   dk <- Rmpfr::mpfr(dk, precBits)
   
@@ -46,7 +47,7 @@ lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=
     grad_Fx <- Rmpfr::mpfr(grad_Fx, precBits)
     gg <- grad_Fx %*% dk
   }
-  if(VERBOSE >=1) print(format(gg))
+  if(VERBOSE >=3) print(format(gg))
   
   lineSearchSteps <- 0
   lineSearching = TRUE
