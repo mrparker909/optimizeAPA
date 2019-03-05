@@ -23,7 +23,7 @@
 #' @examples 
 #' # (1D example, compared against stats::optim)
 #' optim_DFP_APA(15, func=function(x, precBits=64){(Rmpfr::mpfr(x,precBits)-10)^2}, maxSteps = 1000, precBits = 64)
-#' optim(par = 15,     fn = function(x){(x-10)^2}, hessian = TRUE,   method="BFGS")
+#' optim(par = 15, fn = function(x){(x-10)^2}, hessian = TRUE, method="BFGS")
 #' 
 #' # (1D example, compared against stats::optim)
 #' fun <- function(par, xdat, precBits=64) {
