@@ -99,3 +99,39 @@ dbinom_APA <- function(x, size, prob, precBits=128) {
   return(dens)
 }
 
+#' @title plotConvergence
+#' @description Plot the path to convergence of an optimization algorithm (such as optim_DFP_APA).
+#' @param optimOutput The result of running an optimization algorithm with keepValues=TRUE
+#' # N dimensional quadratic
+#' funcND <- function(par, center, precBits=64) {
+#'   par <- Rmpfr::mpfr(par, precBits)
+#'   sum((par-center)^2)
+#' } 
+#' opt <- optim_DFP_APA(starts = c(0,0,0), func = funcND, center=c(1,2,3), keepValues=FALSE)
+#' plotConvergence(opt)
+plotConvergence <- function(optimOutput, digits=3) {
+  require(ggplot2)
+  op <- optimOutput
+  len <- length(op$f)
+  lenx <- length(op$grad[[1]])
+  
+  dat <- data.frame()
+  dat_arrows <- data.frame()
+  fv <- sapply(X = op$f, FUN = as.numeric)
+  for(i in 1:len) {
+    for(j in 1:lenx) {
+      xvij <- as.numeric(op$x[[i]][[j]])
+      dat <- rbind(dat,data.frame(par=j, xv=xvij, FunctionValue=fv[i], steps=(op$steps-i+1)))
+    }
+  }
+  
+  ggplot(data=dat) + 
+    geom_point(aes(x=xv, y=steps, color=FunctionValue), size=4) +
+    geom_path(aes(x=xv, y=steps),
+              arrow = arrow(length=unit(0.30,"cm"), ends="first", type = "closed")) +
+    geom_label(aes(label=format(FunctionValue,digits=digits), x=xv, y=steps+0.5), size=2) +
+    facet_wrap(.~par, scales = "free") +
+    xlab("Visited x Values") + ylab("Algorithm Step") +
+    ggtitle("Convergence Path (APA)") + theme_bw()
+}
+

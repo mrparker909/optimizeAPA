@@ -61,6 +61,13 @@
 #' trueValues <- c(log(mean(xdat2D)), log(mean(ydat2D)))
 #' op1 <- optim_DFP_APA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, precBits=64)
 #' op2 <- optim(par = starts2D, fn = fun2D2, hessian = TRUE, method="BFGS", xdat=xdat2D, ydat=ydat2D)
+#' 
+#' # N dimensional quadratic
+#' funcND <- function(par, center, precBits=64) {
+#'   par <- Rmpfr::mpfr(par, precBits)
+#'   sum((par-center)^2)
+#' } 
+#' optim_DFP_APA(starts = c(0,0,0,0,0), func = funcND, center=c(1,2,3,4,5))
 optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchMaxSteps=500, keepValues=FALSE, VERBOSE=0, ...) {
   require(Rmpfr)
   # 0) initial guess
@@ -150,11 +157,11 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
     iB_list <- updateList(new_el = iB_next, iB_list, M = 1+length(iB_list))
     
     # check for convergence
-    if( sqrt(g_list[[1]] %*% g_list[[1]]) < Rmpfr::mpfr(0.5,precBits)^(precBits-1)) {
+    if( sqrt(g_list[[1]] %*% g_list[[1]]) < Rmpfr::mpfr(0.5,precBits)^(precBits-2)) {
       if(VERBOSE>=1) {
         print("CONVERGED:")
         print(paste("  stopping condition: ", format(sqrt(g_list[[1]] %*% g_list[[1]]))))
-        print(paste("  was less than tolerance: ", format(Rmpfr::mpfr(0.5,precBits)^(precBits-4))))
+        print(paste("  was less than tolerance: ", format(Rmpfr::mpfr(0.5,precBits)^(precBits-2))))
       }
       converged = TRUE
     }
