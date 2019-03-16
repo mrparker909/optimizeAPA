@@ -102,14 +102,17 @@ dbinom_APA <- function(x, size, prob, precBits=128) {
 #' @title plotConvergence
 #' @description Plot the path to convergence of an optimization algorithm (such as optim_DFP_APA).
 #' @param optimOutput The result of running an optimization algorithm with keepValues=TRUE
+#' @param variable Default is NULL, will print convergence plot for all variables, otherwise an integer vector (such as c(1,3)) indicating which variables to print convergence plot for.
+#' @param digits Default is 5. Number of digits to print on convergence plot.
+#' @examples 
 #' # N dimensional quadratic
 #' funcND <- function(par, center, precBits=64) {
 #'   par <- Rmpfr::mpfr(par, precBits)
 #'   sum((par-center)^2)
 #' } 
-#' opt <- optim_DFP_APA(starts = c(0,0,0), func = funcND, center=c(1,2,3), keepValues=FALSE)
-#' plotConvergence(opt)
-plotConvergence <- function(optimOutput, digits=3) {
+#' opt <- optimizeAPA::optim_DFP_APA(starts = c(0,0,0), func = funcND, center=c(1,2,3), keepValues=TRUE)
+#' plotConvergence(opt, variable=c(1,3))
+plotConvergence <- function(optimOutput, variable=NULL, digits=5) {
   require(ggplot2)
   op <- optimOutput
   len <- length(op$f)
@@ -120,6 +123,11 @@ plotConvergence <- function(optimOutput, digits=3) {
   fv <- sapply(X = op$f, FUN = as.numeric)
   for(i in 1:len) {
     for(j in 1:lenx) {
+      if(!is.null(variable)) {
+        if(!(j %in% variable)) {
+          next()
+        } 
+      }
       xvij <- as.numeric(op$x[[i]][[j]])
       dat <- rbind(dat,data.frame(par=j, xv=xvij, FunctionValue=fv[i], steps=(op$steps-i+1)))
     }
@@ -128,8 +136,8 @@ plotConvergence <- function(optimOutput, digits=3) {
   ggplot(data=dat) + 
     geom_point(aes(x=xv, y=steps, color=FunctionValue), size=4) +
     geom_path(aes(x=xv, y=steps),
-              arrow = arrow(length=unit(0.30,"cm"), ends="first", type = "closed")) +
-    geom_label(aes(label=format(FunctionValue,digits=digits), x=xv, y=steps+0.5), size=2) +
+              arrow = arrow(length=unit(0.30,"cm"), ends="first", type = "open"), color="forestgreen") +
+    geom_label(aes(label=format(FunctionValue,digits=digits), x=xv, y=steps+0.5), size=2, alpha=0.6) +
     facet_wrap(.~par, scales = "free") +
     xlab("Visited x Values") + ylab("Algorithm Step") +
     ggtitle("Convergence Path (APA)") + theme_bw()
