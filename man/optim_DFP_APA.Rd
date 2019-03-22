@@ -30,7 +30,7 @@ optim_DFP_APA arbitrary precision implementation of DFP (Davidon-Fletcher-Powel)
 \examples{
 # (1D example, compared against stats::optim)
 optim_DFP_APA(15, func=function(x, precBits=64){(Rmpfr::mpfr(x,precBits)-10)^2}, maxSteps = 1000, precBits = 64)
-optim(par = 15,     fn = function(x){(x-10)^2}, hessian = TRUE,   method="BFGS")
+optim(par = 15, fn = function(x){(x-10)^2}, hessian = TRUE, method="BFGS")
 
 # (1D example, compared against stats::optim)
 fun <- function(par, xdat, precBits=64) {
@@ -67,4 +67,11 @@ starts2D <- log(c(5,7))
 trueValues <- c(log(mean(xdat2D)), log(mean(ydat2D)))
 op1 <- optim_DFP_APA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, precBits=64)
 op2 <- optim(par = starts2D, fn = fun2D2, hessian = TRUE, method="BFGS", xdat=xdat2D, ydat=ydat2D)
+
+# N dimensional quadratic
+funcND <- function(par, center, precBits=64) {
+  par <- Rmpfr::mpfr(par, precBits)
+  sum((par-center)^2)
+} 
+optim_DFP_APA(starts = c(0,0,0,0,0), func = funcND, center=c(1,2,3,4,5))
 }

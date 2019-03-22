@@ -74,6 +74,28 @@ dpois_APA <- function(x, lambda, precBits=128) {
   return(dens)
 }
 
+#' @title Arbitrary Precision Logistic density function.
+#' @description Logistic density function with arbitrary precision. Uses library Rmpfr for arbitrary precision arithmetic.
+#' @param x quantile
+#' @param location Location parameter (default 0)
+#' @param scale    Scale parameter (default 1)
+#' @param precBits Number of bits of precision
+#' @export
+plogis_APA <- function(x, location = 0, scale=1, precBits=128) {
+  require(Rmpfr)
+  # create APA numbers
+  x_apa <- Rmpfr::mpfr(x,        precBits=precBits)
+  m_apa <- Rmpfr::mpfr(location, precBits=precBits)
+  s_apa <- Rmpfr::mpfr(scale,    precBits=precBits)
+  # calculate density
+  # F(x) = 1 / (1 + exp(-(x-m)/s))
+  dens <- 1 / (1+exp(-1*(x_apa-m_apa)/s_apa))
+  if(any(is.na(dens))) {
+    stop(paste0("DENSITY IS NaN:", "\n x_apa=",format(x_apa), "\n m_apa=",format(m_apa), "\n s_apa=",format(s_apa)))
+  }
+  return(dens)
+}
+
 #' @title Arbitrary Precision Binomial density function.
 #' @description Binomial density function with arbitrary precision. Uses library Rmpfr for arbitrary precision arithmetic.
 #' @param x quantile (number of Bernoulli successes with success probability prob)
