@@ -153,21 +153,7 @@ library(ggplot2) # ggplot for plotting
 op <- optim_DFP_NAPA(starts=0, func=quadratic_NAPA, center=10, keepValues = TRUE)
 
 # convergence path plot:
-xv <- as.numeric(op$x)
-fv <- as.numeric(op$f)
-
-dat <- data.frame(xv=rev(xv), FunctionValue=factor(signif(rev(fv),4)), steps=0:op$steps)
-
-s <- seq(length(xv)-1)
-dat_arrows <- data.frame(x0 = rev(xv)[s+1], y0 = dat$steps[s+1], x1 = rev(xv)[s], y1 = dat$steps[s])
-
-ggplot(data=dat) + 
-  geom_point(aes(x=xv, y=steps, colour=FunctionValue, size=FunctionValue)) +
-  geom_segment(data=dat_arrows, aes(x=x1, y=y1, xend=x0, yend=y0), 
-               arrow = arrow(length=unit(0.30,"cm"), ends="last", type = "closed")) +
-  geom_label(aes(label=FunctionValue, x=xv, y=steps+0.25)) +
-    xlab("Visited x Values") + ylab("Algorithm Step") +
-    ggtitle("Convergence Path (NAPA)") + theme_minimal()
+plotConvergence(op) + ggtitle("Convergence Path")
 ```
 
 ![](README_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
@@ -180,21 +166,7 @@ And the same for the APA version:
 op <- optim_DFP_APA(starts=0, func=quadratic, center=10, keepValues = TRUE)
 
 # convergence path plot:
-xv <- sapply(X = op$x, FUN = format, digits=5)
-fv <- sapply(X = op$f, FUN = format, digits=5)
-
-dat <- data.frame(xv=rev(xv), FunctionValue=factor(rev(fv), levels=unique(fv)), steps=0:op$steps)
-
-s <- seq(length(xv)-1)
-dat_arrows <- data.frame(x0 = rev(xv)[s+1], y0 = dat$steps[s+1], x1 = rev(xv)[s], y1 = dat$steps[s])
-
-ggplot(data=dat) + 
-  geom_point(aes(x=xv, y=steps, colour=FunctionValue, size=FunctionValue)) +
-  geom_segment(data=dat_arrows, aes(x=x1, y=y1, xend=x0, yend=y0), 
-               arrow = arrow(length=unit(0.30,"cm"), ends="last", type = "closed")) +
-  geom_label(aes(label=FunctionValue, x=xv, y=steps+0.25)) +
-    xlab("Visited x Values") + ylab("Algorithm Step") +
-    ggtitle("Convergence Path (APA)") + theme_minimal()
+plotConvergence(op)
 ```
 
 ![](README_files/figure-html/unnamed-chunk-5-1.png)<!-- -->

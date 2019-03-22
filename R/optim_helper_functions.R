@@ -140,6 +140,6 @@ plotConvergence <- function(optimOutput, variable=NULL, digits=5) {
     geom_label(aes(label=format(FunctionValue,digits=digits), x=xv, y=steps+0.5), size=2, alpha=0.6) +
     facet_wrap(.~par, scales = "free") +
     xlab("Visited x Values") + ylab("Algorithm Step") +
-    ggtitle("Convergence Path (APA)") + theme_bw()
+    ggtitle("Convergence Path") + theme_bw()
 }
 
