@@ -67,6 +67,7 @@ dpois_APA <- function(x, lambda, precBits=128) {
   lambda_apa <- Rmpfr::mpfr(lambda, precBits = precBits)
   # calculate the density
   dens <- exp(-1*lambda_apa)*lambda_apa^(x_apa)/Rmpfr::mpfr(gmp::factorialZ(x),precBits)
+  dens <- Rmpfr::mpfr(dens, precBits=precBits)
   if(any(is.na(dens))) {
     stop(paste0("DENSITY IS NaN:", "\n x_apa=",format(x_apa), "\n lambda_apa=",format(lambda_apa)))
   }
@@ -93,6 +94,7 @@ dbinom_APA <- function(x, size, prob, precBits=128) {
   
   #dens <- Rmpfr::chooseMpfr(size,x) * (prob_apa)^(x_apa) * (q_apa)^(size-x_apa)
   dens <- gmp::chooseZ(size,x) * (prob_apa)^(x_apa) * (q_apa)^(size-x_apa)
+  dens <- Rmpfr::mpfr(dens, precBits=precBits)
   if(any(is.na(dens))) {
     stop(paste0("DENSITY IS NaN:", "\n x_apa=",format(x_apa), "\n size_apa=",format(size_apa), "\n prob_apa=",format(prob_apa)))
   }
