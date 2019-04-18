@@ -31,10 +31,12 @@ grad_FD_NAPA <- function(func, x_val, stepsize = .Machine$double.eps^(1/3), ...)
 # grad_FD_APA(func = function(x, precBits){x^2}, x=1)
 # grad_FD_APA(func = function(x, precBits){x^2}, x=2)
 # grad_FD_APA(func = function(x, precBits){ x[1]^2 + x[2]^2}, x=c(1,3))
-grad_FD_APA <- function(func, x_val, stepMod=0, precBits=64, VERBOSE=0,...) {
-  require(Rmpfr)
+grad_FD_APA <- function(func, x_val, stepMod=0, precBits=64, ...) {
   x <- Rmpfr::mpfr(x_val, precBits=precBits)
-  stepsize <- Rmpfr::mpfr(.Machine$double.eps, precBits=precBits)^(1/3)*10^(-stepMod) #Rmpfr::mpfr(.Machine$double.eps, precBits=precBits)^Rmpfr::mpfr(1/3), precBits=precBits)
+  # stepsize <- max(Rmpfr::mpfr(.Machine$double.eps, precBits=precBits)^(1/3)*10^(-log(1+stepMod)), #Rmpfr::mpfr(.Machine$double.eps, precBits=precBits)^Rmpfr::mpfr(1/3), precBits=precBits)
+  #                 Rmpfr::mpfr(2,precBits=precBits)^(-precBits+2)
+  #                 )
+  stepsize <- Rmpfr::mpfr(2,precBits=precBits)^(-precBits/2-stepMod+2)
   len_x <- length(x)
   delta_f <- list()
   for(i in seq(len_x)) {
@@ -44,7 +46,6 @@ grad_FD_APA <- function(func, x_val, stepMod=0, precBits=64, VERBOSE=0,...) {
   }
   
   delta_f <- new("mpfr", unlist(delta_f))/(2*stepsize)
-  if(VERBOSE >=1) print(paste("gradient=", format(delta_f)))
   return(delta_f)
 }
 
@@ -61,18 +62,17 @@ grad_FD_APA <- function(func, x_val, stepMod=0, precBits=64, VERBOSE=0,...) {
 #' dpois(x=41, lambda=10) # is not zero
 #' dpois_APA(x=41, lambda=10, precBits = 128)
 dpois_APA <- function(x, lambda, precBits=128) {
-  require(Rmpfr)
   # create arbitrary precision arithmetic numbers
   x_apa      <- Rmpfr::mpfr(x, precBits = precBits)
   lambda_apa <- Rmpfr::mpfr(lambda, precBits = precBits)
   # calculate the density
   dens <- exp(-1*lambda_apa)*lambda_apa^(x_apa)/Rmpfr::mpfr(gmp::factorialZ(x),precBits)
   dens <- Rmpfr::mpfr(dens, precBits=precBits)
-  if(any(is.na(dens))) {
-    stop(paste0("DENSITY IS NaN:", "\n x_apa=",format(x_apa), "\n lambda_apa=",format(lambda_apa)))
-  }
   return(dens)
 }
+
+
+
 
 #' @title Arbitrary Precision Logistic density function.
 #' @description Logistic density function with arbitrary precision. Uses library Rmpfr for arbitrary precision arithmetic.
@@ -82,19 +82,16 @@ dpois_APA <- function(x, lambda, precBits=128) {
 #' @param precBits Number of bits of precision
 #' @export
 plogis_APA <- function(x, location = 0, scale=1, precBits=128) {
-  require(Rmpfr)
   # create APA numbers
-  x_apa <- Rmpfr::mpfr(x,        precBits=precBits)
-  m_apa <- Rmpfr::mpfr(location, precBits=precBits)
-  s_apa <- Rmpfr::mpfr(scale,    precBits=precBits)
+  x_apa <- Rmpfr::mpfr(x,           precBits=precBits)
+  m_apa <- Rmpfr::mpfr(location,    precBits=precBits)
+  s_apa <- Rmpfr::mpfr(scale,       precBits=precBits)
   # calculate density
   # F(x) = 1 / (1 + exp(-(x-m)/s))
   dens <- 1 / (1+exp(-1*(x_apa-m_apa)/s_apa))
-  if(any(is.na(dens))) {
-    stop(paste0("DENSITY IS NaN:", "\n x_apa=",format(x_apa), "\n m_apa=",format(m_apa), "\n s_apa=",format(s_apa)))
-  }
   return(dens)
 }
+
 
 #' @title Arbitrary Precision Binomial density function.
 #' @description Binomial density function with arbitrary precision. Uses library Rmpfr for arbitrary precision arithmetic.
@@ -108,20 +105,19 @@ plogis_APA <- function(x, location = 0, scale=1, precBits=128) {
 #' sum(dbinom_APA(x = 0:10, size = 10, prob=0.2, precBits = 256))
 #' sum(dbinom(x = 0:10, size = 10, prob=0.2))
 dbinom_APA <- function(x, size, prob, precBits=128) {
-  require(Rmpfr)
-  x_apa    <- Rmpfr::mpfr(x, precBits=precBits)
+  x_apa    <- Rmpfr::mpfr(x,    precBits=precBits)
   size_apa <- Rmpfr::mpfr(size, precBits=precBits)
   prob_apa <- Rmpfr::mpfr(prob, precBits=precBits)
-  q_apa    <- Rmpfr::mpfr(1,precBits=precBits)-prob_apa
+  q_apa    <- Rmpfr::mpfr(1,    precBits=precBits)-prob_apa
   
   #dens <- Rmpfr::chooseMpfr(size,x) * (prob_apa)^(x_apa) * (q_apa)^(size-x_apa)
   dens <- gmp::chooseZ(size,x) * (prob_apa)^(x_apa) * (q_apa)^(size-x_apa)
   dens <- Rmpfr::mpfr(dens, precBits=precBits)
-  if(any(is.na(dens))) {
-    stop(paste0("DENSITY IS NaN:", "\n x_apa=",format(x_apa), "\n size_apa=",format(size_apa), "\n prob_apa=",format(prob_apa)))
-  }
   return(dens)
 }
+
+
+
 
 #' @title plotConvergence
 #' @description Plot the path to convergence of an optimization algorithm (such as optim_DFP_APA).
