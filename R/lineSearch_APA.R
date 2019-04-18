@@ -26,28 +26,39 @@
 #'  }
 #'  return(l)
 #'  })
-lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=0, lineSearchMaxSteps = 100, VERBOSE=0, ...) {
-  require(Rmpfr)
+lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=0, lineSearchMaxSteps = 100, ...) {
   ten <- Rmpfr::mpfr(10, precBits)
-  delta <- Rmpfr::mpfr(0.5, precBits)*ten^(-stepMod)
-  alpha <- Rmpfr::mpfr(0.5, precBits)*ten^(-1-log(stepMod))
+  delta <- Rmpfr::mpfr(0.5, precBits)#*ten^(-stepMod)
+  alpha <- Rmpfr::mpfr(0.05, precBits)#*ten^(-1-(stepMod))
   x_curr <- Rmpfr::mpfr(x_curr, precBits) 
+  
   dk <- Rmpfr::mpfr(dk, precBits)
+  if(t(dk)%*%dk < 1) {
+    dk <- Rmpfr::mpfr(dk, precBits)/sqrt(sum(dk^2))
+  }
   
-  
-  if(is.nan(t(dk)%*%dk)) warning("WARNING: direction vector dk is NaN")
-  if(any(is.na(grad_Fx))) stop("grad_Fx is NaN")
   t <- 1
   f_curr <- func(x_curr, precBits=precBits, ...)
   x_next <- x_curr + dk
   f_next <- func(x_next, precBits=precBits, ...)
+  
+  
   gg <- NULL
-  if(is.null(grad_Fx)) {gg <- abs(grad_FD_APA(func=func, x_val=x_curr, precBits=precBits, ...) %*% dk)}
-  else {
+  if(is.null(grad_Fx)) {
+    gg <- abs(grad_FD_APA(func  = func,
+                          x_val = x_curr,
+                          precBits = precBits, ...) %*% dk)
+  } else {
     grad_Fx <- Rmpfr::mpfr(grad_Fx, precBits)
-    gg <- grad_Fx %*% dk
+    gg <- abs(grad_Fx %*% dk)
   }
-  if(VERBOSE >=3) print(format(gg))
+  
+  # consider adding this?
+  # if(f_next < f_curr) {
+  #   if(abs(f_next-f_curr) > gg/2) return(list(x_next=x_next, f_next=f_next, iterations=0))
+  # }
+  #if(f_next < f_curr) { return(list(x_next=x_next, f_next=f_next, iterations=0)) }
+  ##
   
   lineSearchSteps <- 0
   lineSearching = TRUE
@@ -60,10 +71,11 @@ lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=
     if(any(is.na(f_next))) stop("ERROR: f_next is NaN")
     if(any(is.na(f_curr))) stop("ERROR: f_curr is NaN")
     if(any(is.na(gg))) stop("ERROR: gg is NaN")
-    if(f_next <  f_curr - alpha * t * gg | f_next - f_curr < Rmpfr::mpfr(0.5, precBits)^(precBits-1)) {
+    if(f_next <  f_curr - alpha * t * gg) {
       lineSearching = FALSE
     } else {
-      t <- delta*t
+      #t <- delta*2^(-stepMod)*t
+      t <- delta*t #delta*ten^(-lineSearchSteps+1)*t
       x_next <- x_curr + t * dk
       f_next <- func(x_next, precBits=precBits, ...)
     }

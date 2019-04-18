@@ -21,15 +21,28 @@
 #' 
 lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, lineSearchMaxSteps = 100, ...) {
   delta <- 0.5
+  alpha <- 0.5
   if(is.nan(t(dk)%*%dk)) warning("WARNING: direction vector dk is NaN")
+  
+  if(t(dk)%*%dk < 1) {
+    dk <- dk / sqrt(sum(dk^2))
+  }
   
   t <- 1
   f_curr <- func(x_curr, ...)
   x_next <- x_curr + dk
   f_next <- func(x_next, ...)
+  
   gg <- NULL
   if(is.null(grad_Fx)) gg <- abs(grad_FD_NAPA(func=func, x_val=x_curr, ...) %*% dk)
-  else gg <- grad_Fx %*% dk
+  else gg <- abs(grad_Fx %*% dk)
+  
+  # consider adding
+  # if(f_next < f_curr) {
+  #   return(list(x_next=x_next, f_next=f_next, iterations=0))
+  # }
+  ##
+  
     
   lineSearchSteps <- 0
   lineSearching = TRUE
@@ -42,7 +55,7 @@ lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, lineSearchMaxSteps =
     if(is.nan(f_next)) warning("WARNING: f_next is NaN")
     if(is.nan(f_curr)) warning("WARNING: f_curr is NaN")
     if(is.nan(gg)) warning("WARNING: gg is NaN")
-    if(f_next < f_curr - 0.5 * t * gg) {
+    if(f_next < f_curr - alpha * t * gg) {
       lineSearching = FALSE
     } else {
       t <- delta*t

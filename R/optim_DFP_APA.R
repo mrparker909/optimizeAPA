@@ -17,7 +17,6 @@
 #' @param maxSteps maximum number of iterations for the optimization algorithm
 #' @param lineSearchMaxSteps maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).
 #' @param keepValues if TRUE will return all visited values during the optimization, rather than only the final values.
-#' @param VERBOSE integer number, if greater than 0 will provide some console output during the optimization process
 #' @param ... extra parameters passed on to func
 #' @export
 #' @examples 
@@ -68,10 +67,12 @@
 #'   sum((par-center)^2)
 #' } 
 #' optim_DFP_APA(starts = c(0,0,0,0,0), func = funcND, center=c(1,2,3,4,5))
-optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchMaxSteps=500, keepValues=FALSE, VERBOSE=0, ...) {
-  require(Rmpfr)
+optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, ...) {
+  ten <- Rmpfr::mpfr(10, precBits=precBits)
+  two <- Rmpfr::mpfr(2, precBits=precBits)
   # 0) initial guess
   xk  <- Rmpfr::mpfr(starts, precBits=precBits)
+  dim(xk) <- c(length(starts),1)
   Ix  <- Rmpfr::mpfrArray(diag(rep(1, times=length(xk))), precBits=precBits, dim = c(length(xk),length(xk)))
   Bk  <- Ix
   iBk <- Bk
@@ -79,7 +80,7 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
   # initialize lists
   x_list  <- updateList(new_el = xk)
   f_list  <- updateList(new_el = func(xk, precBits=precBits, ...))
-  g_list  <- updateList(new_el = grad_FD_APA(func = func, x_val = xk, precBits=precBits, VERBOSE=VERBOSE, ...))
+  g_list  <- updateList(new_el = grad_FD_APA(func = func, x_val = xk, precBits=precBits, ...))
   
   # B_list  <- updateList(new_el = Bk)
   iB_list <- updateList(new_el = iBk)
@@ -109,27 +110,18 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
     f_next <- ls$f_next
     x_next <- ls$x_next
     
-    if(VERBOSE >= 2) print(paste("f_next =", format(f_next)))
-    if(VERBOSE >= 2) print(paste("x_next =", format(x_next)))
-    
     # 3) upadate lists
     f_list <- updateList(f_next, f_list, M = 1+length(f_list))
-    if(VERBOSE >= 2) if(is.nan(f_list[[1]])) warning("WARNING: f_list[[1]] is NaN")
     x_list <- updateList(x_next, x_list, M = 1+length(x_list))
-    if(VERBOSE >= 2) if(is.nan(t(x_list[[1]])%*%x_list[[1]])) warning("WARNING: x_list[[1]] is NaN")
-    if(VERBOSE >= 2) print(paste("x_curr =", format(x_list[[1]])))
     s_list <- updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list))
-    if(VERBOSE >= 2) if(is.nan(t(s_list[[1]])%*%s_list[[1]])) warning("WARNING: s_list[[1]] is NaN")
     
     # calculate gradient:
-    g_next <- grad_FD_APA(func = func, x_val = x_next, precBits=precBits, stepMod=steps, VERBOSE=VERBOSE, ...)
+    g_next <- grad_FD_APA(func = func, x_val = x_next, precBits=precBits, stepMod=steps, ...)
     g_list <- updateList(g_next, g_list, M = 1+length(g_list))
-    if(VERBOSE >= 2) if(is.nan(t(g_list[[1]])%*%g_list[[1]])) warning("WARNING: g_list[[1]] is NaN")
     y_list <- updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list))
-    if(VERBOSE >= 2) if(is.nan(t(y_list[[1]])%*%y_list[[1]])) warning("WARNING: y_list[[1]] is NaN")
     
-    if(sqrt(t(y_list[[1]])%*%y_list[[1]]) < Rmpfr::mpfr(0.5, precBits)^(precBits-1)) {
-      warning("WARNING: difference in gradients is smaller than precision. Maybe use higher precision by increasing precBits?")
+    if(all(abs(x_list[[1]]-x_list[[2]]) < two^(-precBits))) {
+      warning("WARNING: difference in x values is smaller than precision. Consider using larger precBits for higher precision.")
       converged=TRUE
     }
     # 4) calculate iBk, inverse approximate Hessian
@@ -157,25 +149,14 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
     iB_list <- updateList(new_el = iB_next, iB_list, M = 1+length(iB_list))
     
     # check for convergence
-    if( sqrt(g_list[[1]] %*% g_list[[1]]) < Rmpfr::mpfr(0.5,precBits)^(precBits-2)) {
-      if(VERBOSE>=1) {
-        print("CONVERGED:")
-        print(paste("  stopping condition: ", format(sqrt(g_list[[1]] %*% g_list[[1]]))))
-        print(paste("  was less than tolerance: ", format(Rmpfr::mpfr(0.5,precBits)^(precBits-2))))
-      }
+    if( all(abs(g_list[[1]]) < ten^(-precBits + 2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {
       converged = TRUE
-    }
-    
-    if(converged) {
-      if(VERBOSE >= 2) {
-        print(paste("lineSearchSteps = ", ls$iterations))
-        print(paste("Steps = ", steps))
-      }
     }
   }
   
   if(steps >= maxSteps) {
-    warning("WARNING: exceeded maxSteps, is maxSteps too small?")
+    warning("WARNING: did not converge, exceeded maxSteps, is maxSteps too small?")
+    converged=FALSE
     if(keepValues) {
       return(list(x=x_list, f=f_list, grad=g_list, inv_Hessian=iB_list, steps=steps, converged=converged))
     } else {
