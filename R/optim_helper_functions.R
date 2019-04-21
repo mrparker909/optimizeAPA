@@ -11,10 +11,20 @@ updateList <- function(new_el, old_list = list(), M = 1) {
   return(old_list)
 }
 
+# rounding in R rounds to nearest even number (eg 0.5 rounds to 0), this function does
+# "normal" rounding (eg 0.5 rounds to 1)
+round2_ = function(x, n=0) {
+  sgn = sign(x)
+  z = abs(x)*10^n
+  z = trunc(z + 0.5)
+  z = z/10^n
+  z*sgn
+}
+round2 <- compiler::cmpfun(round2_)
 
 # calculate gradient using finite difference method (requires 2*N function evaluations, where N is the dimension of x)
-grad_FD_NAPA <- function(func, x_val, stepsize = .Machine$double.eps^(1/3), ...) {
-  #stepsize <- rep(stepsize, times=length(x))
+grad_FD_NAPA <- function(func, x_val, stepMod=0, stepsize = .Machine$double.eps^(1/3), ...) {
+  stepsize <- stepsize/(1+stepMod)
   len_x <- length(x_val)
   delta_f <- numeric(len_x)
   for(i in seq(len_x)) {
@@ -62,12 +72,19 @@ grad_FD_APA <- function(func, x_val, stepMod=0, precBits=64, ...) {
 #' dpois(x=41, lambda=10) # is not zero
 #' dpois_APA(x=41, lambda=10, precBits = 128)
 dpois_APA <- function(x, lambda, precBits=128) {
+  ind <- which(x < 0)
+  x[ind] <- 0
+  ind2 <- which(!gmp::is.whole(x))
+  x[ind2] <- 0
   # create arbitrary precision arithmetic numbers
   x_apa      <- Rmpfr::mpfr(x, precBits = precBits)
   lambda_apa <- Rmpfr::mpfr(lambda, precBits = precBits)
   # calculate the density
   dens <- exp(-1*lambda_apa)*lambda_apa^(x_apa)/Rmpfr::mpfr(gmp::factorialZ(x),precBits)
+  dens[ind]  <- 0
+  dens[ind2] <- 0
   dens <- Rmpfr::mpfr(dens, precBits=precBits)
+  
   return(dens)
 }
 
