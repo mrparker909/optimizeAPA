@@ -58,7 +58,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
   # initialize lists
   x_list  <- updateList(new_el = xk)
   f_list  <- updateList(new_el = func(xk, ...))
-  g_list  <- updateList(new_el = grad_FD_NAPA(func = func, x_val = xk, ...))
+  g_list  <- updateList(new_el = grad_FD_NAPA(func = func, x_val = xk, stepMod=0, ...))
   
   # B_list  <- updateList(new_el = Bk)
   iB_list <- updateList(new_el = iBk)
@@ -82,6 +82,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
                           dk = p_list[[1]], 
                           func = func,
                           grad_Fx = g_list[[1]],
+                          stepMod = steps,
                           lineSearchMaxSteps = lineSearchMaxSteps, ...)
     f_next <- ls$f_next
     x_next <- ls$x_next
@@ -90,7 +91,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
     f_list <- updateList(f_next, f_list, M = 1+length(f_list))
     x_list <- updateList(x_next, x_list, M = 1+length(x_list))
     s_list <- updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list))
-    g_list <- updateList(grad_FD_NAPA(func = func, x_val = x_next, ...), g_list, M = 1+length(g_list))
+    g_list <- updateList(grad_FD_NAPA(func = func, x_val = x_next, stepMod=steps, ...), g_list, M = 1+length(g_list))
     y_list <- updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list))
     
     if(all(x_list[[1]]*x_list[[1]] < .Machine$double.eps)) {

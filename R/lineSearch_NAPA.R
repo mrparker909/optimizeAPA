@@ -19,8 +19,8 @@
 #' 
 #' lineSearch_NAPA(x_curr = c(2.05), dk = c(-0.2), func=function(x) { -prod(dpois(c(1,2,3), x))})
 #' 
-lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, lineSearchMaxSteps = 100, ...) {
-  delta <- 0.5
+lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, lineSearchMaxSteps = 100, ...) {
+  delta <- 0.5*2^-log(1+stepMod)
   alpha <- 0.5
   if(is.nan(t(dk)%*%dk)) warning("WARNING: direction vector dk is NaN")
   
@@ -34,7 +34,7 @@ lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, lineSearchMaxSteps =
   f_next <- func(x_next, ...)
   
   gg <- NULL
-  if(is.null(grad_Fx)) gg <- abs(grad_FD_NAPA(func=func, x_val=x_curr, ...) %*% dk)
+  if(is.null(grad_Fx)) gg <- abs(grad_FD_NAPA(func=func, x_val=x_curr, stepMod, ...) %*% dk)
   else gg <- abs(grad_Fx %*% dk)
   
   # consider adding
@@ -42,25 +42,27 @@ lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, lineSearchMaxSteps =
   #   return(list(x_next=x_next, f_next=f_next, iterations=0))
   # }
   ##
-  
-    
   lineSearchSteps <- 0
   lineSearching = TRUE
-  while(lineSearching) {
-    lineSearchSteps <- lineSearchSteps + 1
-    if(lineSearchSteps > lineSearchMaxSteps) {
-      warning("WARNING: exceeded lineSearchMaxSteps, is lineSearchMaxSteps too small?")
-      return(list(x_next=x_next, f_next=f_next, iterations=lineSearchSteps))
-    }
-    if(is.nan(f_next)) warning("WARNING: f_next is NaN")
-    if(is.nan(f_curr)) warning("WARNING: f_curr is NaN")
-    if(is.nan(gg)) warning("WARNING: gg is NaN")
-    if(f_next < f_curr - alpha * t * gg) {
-      lineSearching = FALSE
-    } else {
-      t <- delta*t
-      x_next <- x_curr + t * dk
-      f_next <- func(x_next, ...)
+  if(f_next < f_curr - gg/2) {
+    lineSearching = FALSE
+  } else {
+    while(lineSearching) {
+      lineSearchSteps <- lineSearchSteps + 1
+      if(lineSearchSteps > lineSearchMaxSteps) {
+        warning("WARNING: exceeded lineSearchMaxSteps, is lineSearchMaxSteps too small?")
+        return(list(x_next=x_next, f_next=f_next, iterations=lineSearchSteps))
+      }
+      if(is.nan(f_next)) warning("WARNING: f_next is NaN")
+      if(is.nan(f_curr)) warning("WARNING: f_curr is NaN")
+      if(is.nan(gg)) warning("WARNING: gg is NaN")
+      if(f_next < f_curr - alpha * t * gg) {
+        lineSearching = FALSE
+      } else {
+        t <- delta*t
+        x_next <- x_curr + t * dk
+        f_next <- func(x_next, ...)
+      }
     }
   }
   return(list(x_next=x_next, f_next=f_next, iterations=lineSearchSteps))

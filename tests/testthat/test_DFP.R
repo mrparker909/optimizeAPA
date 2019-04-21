@@ -1,22 +1,22 @@
 context("Testing DFP Algorithms")
 
 test_that("optim_DFP_NAPA", {
-  op1 <- optim_DFP_NAPA(15, func=function(x){(x-10)^2}, tolerance = 10^-16)
+  op1 <- optim_DFP_NAPA(15, func=function(x){(x-10)^2}, tolerance = 10^-8)
   expect_equal(as.numeric(abs(op1$x-10)) < 10^-8, TRUE)
   
-  op1 <- optim_DFP_NAPA(-15, func=function(x){(x-10)^2}, tolerance = 10^-16)
+  op1 <- optim_DFP_NAPA(-15, func=function(x){(x-10)^2}, tolerance = 10^-8)
   op2 <- optim(par = -15, fn = function(x){(x-10)^2}, hessian = TRUE,   method="BFGS")
-  expect_equal(as.numeric(abs(op1$x-op2$par)) < 10^-10, TRUE)
+  expect_equal(as.numeric(abs(op1$x-op2$par)) < 10^-8, TRUE)
   
   fun <- function(par, xdat) {
     -1*prod(dpois(x = xdat, lambda = par))
   }
 
-  op1 <- optim_DFP_NAPA(10, fun, xdat=c(8,11), tolerance=10^-8)
-  expect_equal(as.numeric(abs(op1$x-9.5)) < 10^-8, TRUE)
+  op1 <- optim_DFP_NAPA(10, fun, xdat=c(8,11), tolerance=10^-8, maxSteps = 300)
+  expect_equal(as.numeric(abs(op1$x-9.5)) < 10^-4, TRUE)
   
-  op1 <- optim_DFP_NAPA(8, fun, xdat=c(8,11), tolerance=10^-10)
-  expect_equal(as.numeric(abs(op1$x-9.5)) < 10^-8, TRUE)
+  op1 <- optim_DFP_NAPA(8, fun, xdat=c(8,11), tolerance=10^-9)
+  expect_equal(as.numeric(abs(op1$x-9.5)) < 10^-6, TRUE)
   
   fun2D <- function(par, xdat, ydat) {
     par <- exp(par)
@@ -39,8 +39,27 @@ test_that("optim_DFP_NAPA", {
   par     <- c(1,2,3,4,5)
   centers <- c(5,4,3,2,1)
 
-  op1 <- optim_DFP_NAPA(starts = par, func = funND, centers=centers, tolerance = 10^-8)
+  op1 <- optim_DFP_NAPA(starts = par, func = funND, centers=centers, tolerance = 10^-6)
   expect_equal(as.numeric(abs(op1$x-centers)) < 10^-1, c(TRUE,TRUE,TRUE,TRUE,TRUE))
+  
+  if(require(redNMix)) {
+    op1 <- redNMix::fit_red_Nmix_closed(nit = matrix(c(5,5,5),nrow=1), lambda_site_covariates = NULL, pdet_site_covariates = NULL, red = c(1), K = matrix(10, ncol=3), starts = c(1,0), method="DFP", tolerance=10^-6)
+    op2 <- unmarked::pcount(formula = ~1 ~1, data = unmarked::unmarkedFramePCount(matrix(c(5,5,5),nrow=1)), K = 10, starts = c(1,0), se = FALSE)
+    op3 <- redNMix::fit_red_Nmix_closed(nit = matrix(c(5,5,5),nrow=1), lambda_site_covariates = NULL, pdet_site_covariates = NULL, red = c(1), K = matrix(10, ncol=3), starts = c(1,0), method="BFGS", tolerance=10^-6)
+    expect_equal(as.numeric(abs(exp(op1$x[1])-exp(op2@opt$par[1]))) < 10^-3, TRUE)
+    expect_equal(as.numeric(abs(exp(op1$x[1])-exp(op3$par[1]))) < 10^-3, TRUE)
+    expect_equal(as.numeric(abs(plogis(op1$x[2])-plogis(op2@opt$par[2]))) < 10^-3, TRUE)
+    expect_equal(as.numeric(abs(plogis(op1$x[2])-plogis(op3$par[2]))) < 10^-3, TRUE)
+    
+    op1 <- redNMix::fit_red_Nmix_closed(nit = matrix(c(5,6,4),nrow=1), lambda_site_covariates = NULL, pdet_site_covariates = NULL, red = c(1), K = matrix(10, ncol=3), starts = c(1,0), method="DFP", tolerance=10^-6, maxSteps=200)
+    op2 <- unmarked::pcount(formula = ~1 ~1, data = unmarked::unmarkedFramePCount(matrix(c(5,6,4),nrow=1)), K = 10, starts = c(1,0), se = FALSE)
+    op3 <- redNMix::fit_red_Nmix_closed(nit = matrix(c(5,6,4),nrow=1), lambda_site_covariates = NULL, pdet_site_covariates = NULL, red = c(1), K = matrix(10, ncol=3), starts = c(1,0), method="BFGS", tolerance=10^-8)
+    expect_equal(as.numeric(abs(exp(op1$x[1])-exp(op2@opt$par[1]))) < 10^-3, TRUE)
+    expect_equal(as.numeric(abs(exp(op1$x[1])-exp(op3$par[1]))) < 10^-3, TRUE)
+    expect_equal(as.numeric(abs(plogis(op1$x[2])-plogis(op2@opt$par[2]))) < 10^-3, TRUE)
+    expect_equal(as.numeric(abs(plogis(op1$x[2])-plogis(op3$par[2]))) < 10^-3, TRUE)
+  }
+  
 })
 
 
@@ -79,4 +98,5 @@ test_that("optim_DFP_APA", {
 
   op1 <- optim_DFP_APA(starts = par, func = funND, centers=centers, precBits=precBits, maxSteps = 150, lineSearchMaxSteps = 500)
   expect_equal(as.numeric(abs(op1$x-centers)) < 10^-1, c(TRUE,TRUE,TRUE,TRUE,TRUE))
+ 
 })
