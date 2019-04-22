@@ -1,6 +1,39 @@
 context("Testing lineSearch Algorithms")
 
 test_that("lineSearch_NAPA movement", {
+  if(require(redNMix)) {
+    set.seed(4321)
+    Y <- gen_Nmix_closed(num_sites = 3, num_times = 5, lambda = 4, pdet = 0.25)
+    nit <- Y$nit
+    
+    LL <- function(x) {
+      redNMix::red_Like_closed(x,
+                               nit = nit,
+                               l_s_c=NULL,
+                               p_s_c=NULL,
+                               K=matrix(rep(20,3)),
+                               red=matrix(rep(1,3)))
+    }
+    
+    x0 <- c(log(25),0)
+    f0 <- LL(x0)
+    
+    xj <- x0
+    fj <- f0
+    for(i in 1:10) {
+      lsi <- lineSearch_NAPA(x_curr=xj, 
+                             dk=-1*grad_FD_NAPA(func = LL,
+                                                x_val = xj),
+                             func=LL)
+      xi <- lsi$x_next
+      fi <- lsi$f_next
+      expect_equal(fi < fj, TRUE)
+      fj <- fi
+      xj <- xi
+    }
+    
+  }
+  
   Fu <- function(x) {x^2}
   x_curr <- 1
   ls <- lineSearch_NAPA(x_curr = x_curr, dk = -0.2, lineSearchMaxSteps = 100, func = Fu)

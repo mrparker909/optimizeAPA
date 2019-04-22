@@ -43,7 +43,7 @@ test_that("optim_DFP_NAPA", {
   expect_equal(as.numeric(abs(op1$x-centers)) < 10^-1, c(TRUE,TRUE,TRUE,TRUE,TRUE))
   
   if(require(redNMix)) {
-    op1 <- redNMix::fit_red_Nmix_closed(nit = matrix(c(5,5,5),nrow=1), lambda_site_covariates = NULL, pdet_site_covariates = NULL, red = c(1), K = matrix(10, ncol=3), starts = c(1,0), method="DFP", tolerance=10^-6)
+    op1 <- redNMix::fit_red_Nmix_closed(nit = matrix(c(5,5,5),nrow=1), lambda_site_covariates = NULL, pdet_site_covariates = NULL, red = c(1), K = matrix(10, ncol=3), starts = c(1,0), method="DFP", tolerance=10^-4)
     op2 <- unmarked::pcount(formula = ~1 ~1, data = unmarked::unmarkedFramePCount(matrix(c(5,5,5),nrow=1)), K = 10, starts = c(1,0), se = FALSE)
     op3 <- redNMix::fit_red_Nmix_closed(nit = matrix(c(5,5,5),nrow=1), lambda_site_covariates = NULL, pdet_site_covariates = NULL, red = c(1), K = matrix(10, ncol=3), starts = c(1,0), method="BFGS", tolerance=10^-6)
     expect_equal(as.numeric(abs(exp(op1$x[1])-exp(op2@opt$par[1]))) < 10^-3, TRUE)
