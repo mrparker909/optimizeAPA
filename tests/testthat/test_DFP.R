@@ -33,14 +33,14 @@ test_that("optim_DFP_NAPA", {
   
   
   funND <- function(par, centers) {
-    sum((par-centers)^6)
+    sum((par-centers)^4)
   }
 
   par     <- c(1,2,3,4,5)
   centers <- c(5,4,3,2,1)
 
-  op1 <- optim_DFP_NAPA(starts = par, func = funND, centers=centers, tolerance = 10^-6)
-  expect_equal(as.numeric(abs(op1$x-centers)) < 10^-1, c(TRUE,TRUE,TRUE,TRUE,TRUE))
+  op1 <- optim_DFP_NAPA(starts = par, func = funND, centers=centers, tolerance = 10^-8, maxSteps = 200)
+  expect_equal(as.numeric(abs(op1$x-centers)) < 10^-2, c(TRUE,TRUE,TRUE,TRUE,TRUE))
   
   if(require(redNMix)) {
     op1 <- redNMix::fit_red_Nmix_closed(nit = matrix(c(5,5,5),nrow=1), lambda_site_covariates = NULL, pdet_site_covariates = NULL, red = c(1), K = matrix(10, ncol=3), starts = c(1,0), method="DFP", tolerance=10^-4)
@@ -65,11 +65,11 @@ test_that("optim_DFP_NAPA", {
 
 
 test_that("optim_DFP_APA", {
-  op1 <- optim_DFP_APA(15, func=function(x, precBits=53){(Rmpfr::mpfr(x,precBits)-10)^2})
+  op1 <- optim_DFP_APA(15, func=function(x, precBits=64){(Rmpfr::mpfr(x,precBits)-10)^2})
   op2 <- optim(par = 15, fn = function(x){(x-10)^2}, method="BFGS")
   expect_equal(as.numeric(abs(op1$x-op2$par)) < 10^-10, TRUE)
   
-  op1 <- optim_DFP_APA(-15, func=function(x, precBits=53){(Rmpfr::mpfr(x,precBits)-10)^2})
+  op1 <- optim_DFP_APA(-15, func=function(x, precBits=64){(Rmpfr::mpfr(x,precBits)-10)^2})
   op2 <- optim(par = -15, fn = function(x){(x-10)^2}, method="BFGS")
   expect_equal(as.numeric(abs(op1$x-op2$par)) < 10^-10, TRUE)
 
@@ -81,7 +81,7 @@ test_that("optim_DFP_APA", {
     return(l)
   }
 
-  op1 <- optim_DFP_APA(starts = 10, func = fun, xdat=c(8,11), precBits=128, lineSearchMaxSteps = 200)
+  op1 <- optim_DFP_APA(starts = 10.0, func = fun, xdat=c(8,11), precBits=128, lineSearchMaxSteps = 50, keepValues = FALSE)
   expect_equal(as.numeric(abs(op1$x-mean(c(8,11)))) < 10^-6, TRUE)
 
   
@@ -89,14 +89,14 @@ test_that("optim_DFP_APA", {
     par     <- Rmpfr::mpfr(par, precBits)
     centers <- Rmpfr::mpfr(centers, precBits)
 
-    sum((par-centers)^6)
+    sum((par-centers)^4)
   }
 
-  precBits <- 128
+  precBits <- 53
   par     <- c(1,2,3,4,5)
   centers <- c(5,4,3,2,1)
 
-  op1 <- optim_DFP_APA(starts = par, func = funND, centers=centers, precBits=precBits, maxSteps = 150, lineSearchMaxSteps = 500)
+  op1 <- optim_DFP_APA(starts = par, func = funND, centers=centers, precBits=precBits, maxSteps = 300, lineSearchMaxSteps = 200)
   expect_equal(as.numeric(abs(op1$x-centers)) < 10^-1, c(TRUE,TRUE,TRUE,TRUE,TRUE))
  
 })

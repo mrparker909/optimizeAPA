@@ -19,10 +19,10 @@
 #' 
 #' lineSearch_NAPA(x_curr = c(2.05), dk = c(-0.2), func=function(x) { -prod(dpois(c(1,2,3), x))})
 #' 
-lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, lineSearchMaxSteps = 100, ...) {
+lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, tolerance=10^-8, lineSearchMaxSteps = 100, ...) {
   
-  delta <- 0.5*2^-log(1+stepMod)
-  alpha <- 0.5
+  delta <- 0.5#*2^-log(1+stepMod)
+  alpha <- 0.05
   if(is.nan(t(dk)%*%dk)) warning("WARNING: direction vector dk is NaN")
   
   if(t(dk)%*%dk < 1) {
@@ -45,6 +45,9 @@ lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, lineSearc
   if(is.null(grad_Fx)) gg <- abs(grad_FD_NAPA(func=func, x_val=x_curr, stepMod, ...) %*% dk)
   else gg <- abs(grad_Fx %*% dk)
   
+  # if(sqrt(gg) < tolerance) {
+  #   return(list(x_next=x_best, f_next=f_best, iterations=0))
+  # }
   # consider adding
   # if(f_next < f_curr) {
   #   return(list(x_next=x_next, f_next=f_next, iterations=0))
@@ -58,7 +61,9 @@ lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, lineSearc
     while(lineSearching) {
       lineSearchSteps <- lineSearchSteps + 1
       if(lineSearchSteps > lineSearchMaxSteps) {
-        warning("WARNING: exceeded lineSearchMaxSteps, is lineSearchMaxSteps too small?")
+        if(gg > tolerance) {
+          warning("WARNING: exceeded lineSearchMaxSteps, is lineSearchMaxSteps too small?")
+        }
         if(f_next > f_curr) stop("ERROR: lineSearch returned larger function value")
         return(list(x_next=x_best, f_next=f_best, iterations=lineSearchSteps))
       }
@@ -68,7 +73,8 @@ lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, lineSearc
       if(f_next < f_curr - alpha * t * gg) {
         lineSearching = FALSE
       } else {
-        t <- delta*t
+        mod <- max(10^-4,2^-log(lineSearchSteps+stepMod))
+        t <- delta*t*mod
         x_next <- x_curr + t * dk
         f_next <- func(x_next, ...)
         if(f_next < f_best) {

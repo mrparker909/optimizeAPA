@@ -122,6 +122,7 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
     
     if(all(abs(x_list[[1]]-x_list[[2]]) < two^(-precBits))) {
       warning("WARNING: difference in x values is smaller than precision. Consider using larger precBits for higher precision.")
+      
       converged=TRUE
     }
     # 4) calculate iBk, inverse approximate Hessian
@@ -149,7 +150,7 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
     iB_list <- updateList(new_el = iB_next, iB_list, M = 1+length(iB_list))
     
     # check for convergence
-    if( all(abs(g_list[[1]]) < ten^(-precBits + 2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {
+    if( all(abs(g_list[[1]]) < two^(-precBits/2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {
       converged = TRUE
     }
   }

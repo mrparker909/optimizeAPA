@@ -82,7 +82,8 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
                           dk = p_list[[1]], 
                           func = func,
                           grad_Fx = g_list[[1]],
-                          stepMod = steps,
+                          stepMod = steps, 
+                          tolerance = tolerance,
                           lineSearchMaxSteps = lineSearchMaxSteps, ...)
     f_next <- ls$f_next
     x_next <- ls$x_next
@@ -95,7 +96,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
     y_list <- updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list))
     
     if(all(x_list[[1]]*x_list[[1]] < .Machine$double.eps)) {
-      warning("WARNING: difference in function values is smaller than machine precision. Consider using optim_DFP_APA for higher precision.")
+      warning("WARNING: difference in x values is smaller than machine precision. Consider using optim_DFP_APA for higher precision.")
       converged=TRUE
     }
   
