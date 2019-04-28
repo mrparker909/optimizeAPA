@@ -5,7 +5,7 @@
 \title{optim_DFP_NAPA}
 \usage{
 optim_DFP_NAPA(starts, func, tolerance = 10^-10, maxSteps = 100,
-  lineSearchMaxSteps = 100, keepValues = FALSE, VERBOSE = 0, ...)
+  lineSearchMaxSteps = 100, keepValues = FALSE, ...)
 }
 \arguments{
 \item{starts}{starting values for function}
@@ -20,8 +20,6 @@ optim_DFP_NAPA(starts, func, tolerance = 10^-10, maxSteps = 100,
 
 \item{keepValues}{if TRUE will return all visited values during the optimization, rather than only the final values.}
 
-\item{VERBOSE}{integer number, if greater than 0 will provide some console output during the optimization process}
-
 \item{...}{extra parameters passed on to func}
 }
 \description{
@@ -29,8 +27,8 @@ optim_DFP_NAPA non-arbitrary precision implementation of DFP (Davidon-Fletcher-P
 }
 \examples{
 # (1D example, compared against stats::optim)
-optim_DFP_NAPA(15, func=function(x){(x-10)^2}, maxSteps = 1000, tolerance = 10^-6)
-optim(par = 15,     fn = function(x){(x-10)^2}, hessian = TRUE,   method="BFGS")
+optim_DFP_NAPA(-15.253, func=function(x){(x-10)^2}, maxSteps = 1000, tolerance = 10^-6)
+optim(par = 15, fn = function(x){(x-10)^2}, hessian = TRUE,   method="BFGS")
 
 # (1D example, compared against stats::optim)
 fun <- function(par, xdat) {
@@ -40,7 +38,7 @@ fun <- function(par, xdat) {
 xdat <- c(8,11)#rpois(n = 2, lambda = 10)
 starts <- 10
 
-optim_DFP_NAPA(starts, fun, xdat=xdat, tolerance=10^-10)
+optim_DFP_NAPA(starts, fun, xdat=xdat, tolerance=10^-8)
 optim(par = starts, fn = fun, hessian = TRUE, method="BFGS", xdat=xdat)
 
 # (2D example, compared against stats::optim)

@@ -31,7 +31,10 @@ grad_FD_NAPA <- function(func, x_val, stepMod=0, stepsize = .Machine$double.eps^
 # grad_FD_APA(func = function(x, precBits){x^2}, x=2)
 # grad_FD_APA(func = function(x, precBits){ x[1]^2 + x[2]^2}, x=c(1,3))
 grad_FD_APA <- function(func, x_val, stepMod=0, precBits=64, ...) {
-  x <- Rmpfr::mpfr(x_val, precBits=precBits)
+  if(class(x_val)!="mpfr") 
+    { x <- Rmpfr::mpfr(x_val, precBits=precBits) } 
+  else 
+    { x <- x_val }
   # stepsize <- max(Rmpfr::mpfr(.Machine$double.eps, precBits=precBits)^(1/3)*10^(-log(1+stepMod)), #Rmpfr::mpfr(.Machine$double.eps, precBits=precBits)^Rmpfr::mpfr(1/3), precBits=precBits)
   #                 Rmpfr::mpfr(2,precBits=precBits)^(-precBits+2)
   #                 )
@@ -66,13 +69,15 @@ dpois_APA <- function(x, lambda, precBits=128) {
   ind2 <- which(!gmp::is.whole(x))
   x[ind2] <- 0
   # create arbitrary precision arithmetic numbers
-  x_apa      <- Rmpfr::mpfr(x, precBits = precBits)
-  lambda_apa <- Rmpfr::mpfr(lambda, precBits = precBits)
+  if(class(x)!="mpfr") { x_apa <- Rmpfr::mpfr(x, precBits = precBits) }
+  else { x_apa <- x }
+  if(class(lambda)!="mpfr") { lambda_apa <- Rmpfr::mpfr(lambda, precBits = precBits) }
+  else{ lambda_apa <- lambda}
   # calculate the density
   dens <- exp(-1*lambda_apa)*lambda_apa^(x_apa)/Rmpfr::mpfr(gmp::factorialZ(x),precBits)
   dens[ind]  <- 0
   dens[ind2] <- 0
-  dens <- Rmpfr::mpfr(dens, precBits=precBits)
+  #dens <- Rmpfr::mpfr(dens, precBits=precBits)
   
   return(dens)
 }
@@ -89,12 +94,12 @@ dpois_APA <- function(x, lambda, precBits=128) {
 #' @export
 plogis_APA <- function(x, location = 0, scale=1, precBits=128) {
   # create APA numbers
-  x_apa <- Rmpfr::mpfr(x,           precBits=precBits)
-  m_apa <- Rmpfr::mpfr(location,    precBits=precBits)
-  s_apa <- Rmpfr::mpfr(scale,       precBits=precBits)
+  if(class(x)!="mpfr") { x_apa <- (location-Rmpfr::mpfr(x, precBits=precBits))/scale }
+  else { x_apa <- (location-x)/scale }
+  
   # calculate density
   # F(x) = 1 / (1 + exp(-(x-m)/s))
-  dens <- 1 / (1+exp(-1*(x_apa-m_apa)/s_apa))
+  dens <- 1 / (1+exp(x_apa))#1*(x_apa-m_apa)/s_apa))
   return(dens)
 }
 
@@ -111,10 +116,13 @@ plogis_APA <- function(x, location = 0, scale=1, precBits=128) {
 #' sum(dbinom_APA(x = 0:10, size = 10, prob=0.2, precBits = 256))
 #' sum(dbinom(x = 0:10, size = 10, prob=0.2))
 dbinom_APA <- function(x, size, prob, precBits=128) {
-  x_apa    <- Rmpfr::mpfr(x,    precBits=precBits)
-  size_apa <- Rmpfr::mpfr(size, precBits=precBits)
-  prob_apa <- Rmpfr::mpfr(prob, precBits=precBits)
-  q_apa    <- Rmpfr::mpfr(1,    precBits=precBits)-prob_apa
+  if(class(x)!="mpfr") { x_apa <- Rmpfr::mpfr(x, precBits=precBits) }
+  else{ x_apa <- x }
+  if(class(size)!="mpfr") { size_apa <- Rmpfr::mpfr(size, precBits=precBits) }
+  else { size_apa <- size }
+  if(class(prob)!="mpfr") { prob_apa <- Rmpfr::mpfr(prob, precBits=precBits) }
+  else{ prob_apa <- prob }
+  q_apa <- Rmpfr::mpfr(1, precBits=precBits)-prob_apa
   
   #dens <- Rmpfr::chooseMpfr(size,x) * (prob_apa)^(x_apa) * (q_apa)^(size-x_apa)
   dens <- gmp::chooseZ(size,x) * (prob_apa)^(x_apa) * (q_apa)^(size-x_apa)

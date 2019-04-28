@@ -13,7 +13,8 @@
 #' @description optim_DFP_APA arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm. The function func must take precBits as an arguement, to inform Rmpfr of the precision.
 #' @param starts starting values for function parameters
 #' @param func   function to optimize, first argument is a vector containing the parameters to be optimized over. Must also take as argument precBits.
-#' @param precBits precision bits for determining stopping condition (how close to zero is considered small enough for the gradient). Note that larger precBits may require much larger maxSteps and lineSearchMaxSteps.
+#' @param tolerance tolerance for determining stopping condition (how close to zero is considered small enough for the gradient). Note that smaller tolerance may require much larger maxSteps and lineSearchMaxSteps. Tolerance should either be larger than 10^-10, or an arbitrary precision number, such as: tolerance=Rmpfr::mpfr(10^-20, precBits=128)
+#' @param precBits determines number of bits of precision for all numbers and calculations.
 #' @param maxSteps maximum number of iterations for the optimization algorithm
 #' @param lineSearchMaxSteps maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).
 #' @param keepValues if TRUE will return all visited values during the optimization, rather than only the final values.
@@ -67,7 +68,17 @@
 #'   sum((par-center)^2)
 #' } 
 #' optim_DFP_APA(starts = c(0,0,0,0,0), func = funcND, center=c(1,2,3,4,5))
-optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, ...) {
+optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, ...) {
+  if(class(tolerance)!="mpfr") {
+    tolerance <- Rmpfr::mpfr(tolerance, precBits)
+  }
+  if(tolerance >=1) {
+    stop("ERROR: tolerance is larger than 1")
+  }
+  if(tolerance <=0) {
+    stop("ERROR: tolerance is less than or equal to 0")
+  }
+  
   ten <- Rmpfr::mpfr(10, precBits=precBits)
   two <- Rmpfr::mpfr(2, precBits=precBits)
   # 0) initial guess
@@ -150,7 +161,7 @@ optim_DFP_APA <- function(starts, func, precBits = 64, maxSteps=100, lineSearchM
     iB_list <- updateList(new_el = iB_next, iB_list, M = 1+length(iB_list))
     
     # check for convergence
-    if( all(abs(g_list[[1]]) < two^(-precBits/2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {
+    if( all(abs(g_list[[1]]) < tolerance)) {#two^(-precBits/2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {
       converged = TRUE
     }
   }

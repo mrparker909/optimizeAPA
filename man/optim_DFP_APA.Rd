@@ -4,23 +4,23 @@
 \alias{optim_DFP_APA}
 \title{optim_DFP_APA}
 \usage{
-optim_DFP_APA(starts, func, precBits = 64, maxSteps = 100,
-  lineSearchMaxSteps = 500, keepValues = FALSE, VERBOSE = 0, ...)
+optim_DFP_APA(starts, func, tolerance = 10^-10, precBits = 64,
+  maxSteps = 100, lineSearchMaxSteps = 100, keepValues = FALSE, ...)
 }
 \arguments{
 \item{starts}{starting values for function parameters}
 
 \item{func}{function to optimize, first argument is a vector containing the parameters to be optimized over. Must also take as argument precBits.}
 
-\item{precBits}{precision bits for determining stopping condition (how close to zero is considered small enough for the gradient). Note that larger precBits may require much larger maxSteps and lineSearchMaxSteps.}
+\item{tolerance}{tolerance for determining stopping condition (how close to zero is considered small enough for the gradient). Note that smaller tolerance may require much larger maxSteps and lineSearchMaxSteps. Tolerance should either be larger than 10^-10, or an arbitrary precision number, such as: tolerance=Rmpfr::mpfr(10^-20, precBits=128)}
+
+\item{precBits}{determines number of bits of precision for all numbers and calculations.}
 
 \item{maxSteps}{maximum number of iterations for the optimization algorithm}
 
 \item{lineSearchMaxSteps}{maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).}
 
 \item{keepValues}{if TRUE will return all visited values during the optimization, rather than only the final values.}
-
-\item{VERBOSE}{integer number, if greater than 0 will provide some console output during the optimization process}
 
 \item{...}{extra parameters passed on to func}
 }

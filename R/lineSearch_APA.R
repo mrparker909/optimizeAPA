@@ -27,15 +27,15 @@
 #'  return(l)
 #'  })
 lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=0, lineSearchMaxSteps = 100, ...) {
-  ten <- Rmpfr::mpfr(10, precBits)
+  #ten <- Rmpfr::mpfr(10, precBits)
   two <- Rmpfr::mpfr(2, precBits)
   delta <- Rmpfr::mpfr(0.5, precBits)#*2^-log(1+stepMod)#*ten^(-stepMod)
   alpha <- Rmpfr::mpfr(0.05, precBits)#*2^-log(1+stepMod)#*ten^(-1-(stepMod))
-  x_curr <- Rmpfr::mpfr(x_curr, precBits) 
+  if(class(x_curr)!="mpfr") { x_curr <- Rmpfr::mpfr(x_curr, precBits) }
+  if(class(dk)!="mpfr") { dk <- Rmpfr::mpfr(dk, precBits) }
   
-  dk <- Rmpfr::mpfr(dk, precBits)
   if(t(dk)%*%dk < 1) {
-    dk <- Rmpfr::mpfr(dk, precBits)/sqrt(sum(dk^2))
+    dk <- dk/sqrt(sum(dk^2))
   }
   
   t <- 1
@@ -56,7 +56,7 @@ lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=
                           x_val = x_curr,
                           precBits = precBits, ...) %*% dk)
   } else {
-    grad_Fx <- Rmpfr::mpfr(grad_Fx, precBits)
+    if(class(grad_Fx)!="mpfr") { grad_Fx <- Rmpfr::mpfr(grad_Fx, precBits) }
     gg <- abs(grad_Fx %*% dk)
   }
   

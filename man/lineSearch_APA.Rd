@@ -5,7 +5,7 @@
 \title{lineSearch_APA}
 \usage{
 lineSearch_APA(x_curr, dk, func, grad_Fx = NULL, precBits = 64,
-  stepMod = 0, lineSearchMaxSteps = 100, VERBOSE = 0, ...)
+  stepMod = 0, lineSearchMaxSteps = 100, ...)
 }
 \arguments{
 \item{x_curr}{starting x value}
