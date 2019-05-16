@@ -47,7 +47,7 @@ grad_FD_APA <- function(func, x_val, stepMod=0, precBits=64, ...) {
     delta_f[[i]] <- func(x+step, precBits=precBits, ...) - func(x-step, precBits=precBits, ...)
   }
   
-  delta_f <- new("mpfr", unlist(delta_f))/(2*stepsize)
+  delta_f <- methods::new("mpfr", unlist(delta_f))/(2*stepsize)
   return(delta_f)
 }
 
