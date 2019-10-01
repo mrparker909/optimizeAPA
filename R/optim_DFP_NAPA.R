@@ -56,12 +56,12 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
   iBk <- Bk
   
   # initialize lists
-  x_list  <- updateList(new_el = xk)
-  f_list  <- updateList(new_el = func(xk, ...))
-  g_list  <- updateList(new_el = grad_FD_NAPA(func = func, x_val = xk, stepMod=0, ...))
+  x_list  <- carryForwardNA(updateList(new_el = xk))
+  f_list  <- carryForwardNA(updateList(new_el = func(xk, ...)))
+  g_list  <- carryForwardNA(updateList(new_el = grad_FD_NAPA(func = func, x_val = xk, stepMod=0, ...)))
   
   # B_list  <- updateList(new_el = Bk)
-  iB_list <- updateList(new_el = iBk)
+  iB_list <- carryForwardNA(updateList(new_el = iBk))
 
   p_list <- list()
   s_list <- list()
@@ -75,7 +75,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
 
     # 1) solve for pk (direction vector)
     pk <- -1 * iB_list[[1]] %*% g_list[[1]]
-    p_list <- updateList(pk, p_list, M = 1+length(p_list))
+    p_list <- carryForwardNA(updateList(pk, p_list, M = 1+length(p_list)))
     
     # 2) line search to find step size t ~= argmin_t f(xk + t*pk)
     ls <- lineSearch_NAPA(x_curr = x_list[[1]], 
@@ -89,11 +89,11 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
     x_next <- ls$x_next
     
     # 3) upadate lists
-    f_list <- updateList(f_next, f_list, M = 1+length(f_list))
-    x_list <- updateList(x_next, x_list, M = 1+length(x_list))
-    s_list <- updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list))
-    g_list <- updateList(grad_FD_NAPA(func = func, x_val = x_next, stepMod=steps, ...), g_list, M = 1+length(g_list))
-    y_list <- updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list))
+    f_list <- carryForwardNA(updateList(f_next, f_list, M = 1+length(f_list)))
+    x_list <- carryForwardNA(updateList(x_next, x_list, M = 1+length(x_list)))
+    s_list <- carryForwardNA(updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list)))
+    g_list <- carryForwardNA(updateList(grad_FD_NAPA(func = func, x_val = x_next, stepMod=steps, ...), g_list, M = 1+length(g_list)))
+    y_list <- carryForwardNA(updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list)))
     
     if(all(x_list[[1]]*x_list[[1]] < .Machine$double.eps)) {
       warning("WARNING: difference in x values is smaller than machine precision. Consider using optim_DFP_APA for higher precision.")

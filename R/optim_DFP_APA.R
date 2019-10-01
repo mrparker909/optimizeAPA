@@ -89,9 +89,9 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
   iBk <- Bk
   
   # initialize lists
-  x_list  <- updateList(new_el = xk)
-  f_list  <- updateList(new_el = func(xk, precBits=precBits, ...))
-  g_list  <- updateList(new_el = grad_FD_APA(func = func, x_val = xk, precBits=precBits, ...))
+  x_list  <- carryForwardNA(updateList(new_el = xk))
+  f_list  <- carryForwardNA(updateList(new_el = func(xk, precBits=precBits, ...)))
+  g_list  <- carryForwardNA(updateList(new_el = grad_FD_APA(func = func, x_val = xk, precBits=precBits, ...)))
   
   # B_list  <- updateList(new_el = Bk)
   iB_list <- updateList(new_el = iBk)
@@ -122,14 +122,14 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
     x_next <- ls$x_next
     
     # 3) upadate lists
-    f_list <- updateList(f_next, f_list, M = 1+length(f_list))
-    x_list <- updateList(x_next, x_list, M = 1+length(x_list))
-    s_list <- updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list))
+    f_list <- carryForwardNA(updateList(f_next, f_list, M = 1+length(f_list)))
+    x_list <- carryForwardNA(updateList(x_next, x_list, M = 1+length(x_list)))
+    s_list <- carryForwardNA(updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list)))
     
     # calculate gradient:
     g_next <- grad_FD_APA(func = func, x_val = x_next, precBits=precBits, stepMod=steps, ...)
-    g_list <- updateList(g_next, g_list, M = 1+length(g_list))
-    y_list <- updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list))
+    g_list <- carryForwardNA(updateList(g_next, g_list, M = 1+length(g_list)))
+    y_list <- carryForwardNA(updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list)))
     
     if(all(abs(x_list[[1]]-x_list[[2]]) < two^(-precBits))) {
       warning("WARNING: difference in x values is smaller than precision. Consider using larger precBits for higher precision.")
@@ -158,7 +158,7 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
       stop(paste("WARNING: inverse hessian had NaN at iteration ", steps))
     }
     # update inverse Hessian list
-    iB_list <- updateList(new_el = iB_next, iB_list, M = 1+length(iB_list))
+    iB_list <- carryForwardNA(updateList(new_el = iB_next, iB_list, M = 1+length(iB_list)))
     
     # check for convergence
     if( all(abs(g_list[[1]]) < tolerance)) {#two^(-precBits/2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {

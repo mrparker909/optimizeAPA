@@ -11,6 +11,21 @@ updateList <- function(new_el, old_list = list(), M = 1) {
   return(old_list)
 }
 
+#' @title carryForwardNA
+#' @description Checks if front of list is NA, then replaces it with the most recent value which is not NA.
+#' @param thelist the list to check for NA head
+#' @export
+carryForwardNA <- function(thelist) {
+  l = length(thelist)
+  i = 2
+  while(any(is.na(thelist[[1]])) & i <= l) {
+    thelist[[1]] <- thelist[[i]]
+    i = i+1    
+  }
+  if(any(is.na(thelist[[1]]))) { stop("ERROR: NA in list position 1, maybe increase precBits") }
+  return(thelist)
+}
+
 # calculate gradient using finite difference method (requires 2*N function evaluations, where N is the dimension of x)
 grad_FD_NAPA <- function(func, x_val, stepMod=0, stepsize = .Machine$double.eps^(1/3), ...) {
   stepsize <- stepsize/(1+stepMod)
