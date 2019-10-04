@@ -5,7 +5,7 @@
 \title{optim_DFP_NAPA}
 \usage{
 optim_DFP_NAPA(starts, func, tolerance = 10^-10, maxSteps = 100,
-  lineSearchMaxSteps = 100, keepValues = FALSE, ...)
+  lineSearchMaxSteps = 100, keepValues = FALSE, Memory = 100, ...)
 }
 \arguments{
 \item{starts}{starting values for function}
@@ -19,6 +19,8 @@ optim_DFP_NAPA(starts, func, tolerance = 10^-10, maxSteps = 100,
 \item{lineSearchMaxSteps}{maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).}
 
 \item{keepValues}{if TRUE will return all visited values during the optimization, rather than only the final values.}
+
+\item{Memory}{maximum number of iterations to remember (default is 100)}
 
 \item{...}{extra parameters passed on to func}
 }

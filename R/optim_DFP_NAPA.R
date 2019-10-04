@@ -17,6 +17,7 @@
 #' @param maxSteps maximum number of iterations for the optimization algorithm
 #' @param lineSearchMaxSteps maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).
 #' @param keepValues if TRUE will return all visited values during the optimization, rather than only the final values.
+#' @param Memory maximum number of iterations to remember (default is 100)
 #' @param ... extra parameters passed on to func
 #' @export
 #' @examples 
@@ -47,7 +48,7 @@
 #' 
 #' op1 <- optim_DFP_NAPA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, tolerance=10^-6)
 #' op2 <- optim(par = starts2D, fn = fun2D, hessian = TRUE, method="BFGS", xdat=xdat2D, ydat=ydat2D)
-optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, ...) {
+optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, Memory=100, ...) {
   # 0) initial guess
   xk  <- starts
   dim(xk) <- c(length(starts),1)
@@ -56,12 +57,12 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
   iBk <- Bk
   
   # initialize lists
-  x_list  <- carryForwardNA(updateList(new_el = xk))
-  f_list  <- carryForwardNA(updateList(new_el = func(xk, ...)))
-  g_list  <- carryForwardNA(updateList(new_el = grad_FD_NAPA(func = func, x_val = xk, stepMod=0, ...)))
+  x_list  <- carryForwardNA(updateList(new_el = xk, M=Memory))
+  f_list  <- carryForwardNA(updateList(new_el = func(xk, ...), M=Memory))
+  g_list  <- carryForwardNA(updateList(new_el = grad_FD_NAPA(func = func, x_val = xk, stepMod=0, ...), M=Memory))
   
   # B_list  <- updateList(new_el = Bk)
-  iB_list <- carryForwardNA(updateList(new_el = iBk))
+  iB_list <- carryForwardNA(updateList(new_el = iBk, M=Memory))
 
   p_list <- list()
   s_list <- list()
@@ -75,7 +76,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
 
     # 1) solve for pk (direction vector)
     pk <- -1 * iB_list[[1]] %*% g_list[[1]]
-    p_list <- carryForwardNA(updateList(pk, p_list, M = 1+length(p_list)))
+    p_list <- carryForwardNA(updateList(pk, p_list, M = Memory))
     
     # 2) line search to find step size t ~= argmin_t f(xk + t*pk)
     ls <- lineSearch_NAPA(x_curr = x_list[[1]], 
@@ -89,11 +90,11 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
     x_next <- ls$x_next
     
     # 3) upadate lists
-    f_list <- carryForwardNA(updateList(f_next, f_list, M = 1+length(f_list)))
-    x_list <- carryForwardNA(updateList(x_next, x_list, M = 1+length(x_list)))
-    s_list <- carryForwardNA(updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list)))
-    g_list <- carryForwardNA(updateList(grad_FD_NAPA(func = func, x_val = x_next, stepMod=steps, ...), g_list, M = 1+length(g_list)))
-    y_list <- carryForwardNA(updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list)))
+    f_list <- carryForwardNA(updateList(f_next, f_list, M = Memory))
+    x_list <- carryForwardNA(updateList(x_next, x_list, M = Memory))
+    s_list <- carryForwardNA(updateList(x_list[[1]]-x_list[[2]], s_list, M = Memory))
+    g_list <- carryForwardNA(updateList(grad_FD_NAPA(func = func, x_val = x_next, stepMod=steps, ...), g_list, M=Memory))
+    y_list <- carryForwardNA(updateList(g_list[[1]]-g_list[[2]], y_list, M = Memory))
     
     if(all(x_list[[1]]*x_list[[1]] < .Machine$double.eps)) {
       warning("WARNING: difference in x values is smaller than machine precision. Consider using optim_DFP_APA for higher precision.")
@@ -111,7 +112,7 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
       iB_next <- iB_list[[1]]
     }
     # update inverse Hessian list
-    iB_list <- updateList(new_el = iB_next, iB_list, M = 1+length(iB_list))
+    iB_list <- updateList(new_el = iB_next, iB_list, M = Memory)
     
     # check for convergence
     if( all(sqrt(abs(g_list[[1]] * g_list[[1]])) < tolerance) ) {

@@ -18,6 +18,7 @@
 #' @param maxSteps maximum number of iterations for the optimization algorithm
 #' @param lineSearchMaxSteps maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).
 #' @param keepValues if TRUE will return all visited values during the optimization, rather than only the final values.
+#' @param Memory maximum number of iterations to remember (default is 100)
 #' @param ... extra parameters passed on to func
 #' @export
 #' @examples 
@@ -68,7 +69,7 @@
 #'   sum((par-center)^2)
 #' } 
 #' optim_DFP_APA(starts = c(0,0,0,0,0), func = funcND, center=c(1,2,3,4,5))
-optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, ...) {
+optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, Memory=100, ...) {
   if(class(tolerance)!="mpfr") {
     tolerance <- Rmpfr::mpfr(tolerance, precBits)
   }
@@ -89,12 +90,12 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
   iBk <- Bk
   
   # initialize lists
-  x_list  <- carryForwardNA(updateList(new_el = xk))
-  f_list  <- carryForwardNA(updateList(new_el = func(xk, precBits=precBits, ...)))
-  g_list  <- carryForwardNA(updateList(new_el = grad_FD_APA(func = func, x_val = xk, precBits=precBits, ...)))
+  x_list  <- carryForwardNA(updateList(new_el = xk, M=Memory))
+  f_list  <- carryForwardNA(updateList(new_el = func(xk, precBits=precBits, ...), M=Memory))
+  g_list  <- carryForwardNA(updateList(new_el = grad_FD_APA(func = func, x_val = xk, precBits=precBits, ...), M=Memory))
   
   # B_list  <- updateList(new_el = Bk)
-  iB_list <- updateList(new_el = iBk)
+  iB_list <- updateList(new_el = iBk, M=Memory)
 
   p_list <- list()
   s_list <- list()
@@ -108,7 +109,7 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
 
     # 1) solve for pk (direction vector)
     pk <- -1 * iB_list[[1]] %*% g_list[[1]]
-    p_list <- updateList(pk, p_list, M = 1+length(p_list))
+    p_list <- updateList(pk, p_list, M = Memory)
     
     # 2) line search to find step size t ~= argmin_t f(xk + t*pk)
     ls <- lineSearch_APA(x_curr = x_list[[1]], 
@@ -122,14 +123,14 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
     x_next <- ls$x_next
     
     # 3) upadate lists
-    f_list <- carryForwardNA(updateList(f_next, f_list, M = 1+length(f_list)))
-    x_list <- carryForwardNA(updateList(x_next, x_list, M = 1+length(x_list)))
-    s_list <- carryForwardNA(updateList(x_list[[1]]-x_list[[2]], s_list, M = 1+length(s_list)))
+    f_list <- carryForwardNA(updateList(f_next, f_list, M = Memory))
+    x_list <- carryForwardNA(updateList(x_next, x_list, M = Memory))
+    s_list <- carryForwardNA(updateList(x_list[[1]]-x_list[[2]], s_list, M = Memory))
     
     # calculate gradient:
     g_next <- grad_FD_APA(func = func, x_val = x_next, precBits=precBits, stepMod=steps, ...)
-    g_list <- carryForwardNA(updateList(g_next, g_list, M = 1+length(g_list)))
-    y_list <- carryForwardNA(updateList(g_list[[1]]-g_list[[2]], y_list, M = 1+length(y_list)))
+    g_list <- carryForwardNA(updateList(g_next, g_list, M = Memory))
+    y_list <- carryForwardNA(updateList(g_list[[1]]-g_list[[2]], y_list, M = Memory))
     
     if(all(abs(x_list[[1]]-x_list[[2]]) < two^(-precBits))) {
       warning("WARNING: difference in x values is smaller than precision. Consider using larger precBits for higher precision.")
@@ -158,7 +159,7 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
       stop(paste("WARNING: inverse hessian had NaN at iteration ", steps))
     }
     # update inverse Hessian list
-    iB_list <- carryForwardNA(updateList(new_el = iB_next, iB_list, M = 1+length(iB_list)))
+    iB_list <- carryForwardNA(updateList(new_el = iB_next, iB_list, M = Memory))
     
     # check for convergence
     if( all(abs(g_list[[1]]) < tolerance)) {#two^(-precBits/2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {
