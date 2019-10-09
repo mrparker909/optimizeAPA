@@ -18,9 +18,12 @@ updateList <- function(new_el, old_list = list(), M = 1) {
 carryForwardNA <- function(thelist) {
   l = length(thelist)
   i = 2
-  while(any(is.na(thelist[[1]])) & i <= l) {
-    thelist[[1]] <- thelist[[i]]
-    i = i+1    
+  while(any(is.na(thelist)) & i <= l) {
+    if(!any(is.na(thelist[[i]]))) {
+      thelist[[1+i-2]] <- thelist[[i]]
+    }
+    i = i+1 
+    if(i>l) { i=2 }
   }
   if(any(is.na(thelist[[1]]))) { stop("ERROR: NA in list position 1, maybe increase precBits") }
   return(thelist)
