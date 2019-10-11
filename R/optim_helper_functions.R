@@ -16,10 +16,13 @@ updateList <- function(new_el, old_list = list(), M = 1) {
 #' @param thelist the list to check for NA head
 #' @export
 carryForwardNA <- function(thelist) {
+  if(any(is.na(thelist[[length(thelist)]]))) { stop("ERROR: NA in last list position, no carry forward possible") }
+  
   l = length(thelist)
   i = 2
   while(any(is.na(thelist)) & i <= l) {
-    if(!any(is.na(thelist[[i]]))) {
+    if(!any(is.na(thelist[[i]])) &
+       any(is.na(thelist[[1+i-2]]))) {
       thelist[[1+i-2]] <- thelist[[i]]
     }
     i = i+1 
