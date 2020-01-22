@@ -4,7 +4,7 @@
 #' @param func function to perform line search on
 #' @param dk direction vector to search along
 #' @param grad_Fx (defaults to NULL) if not NULL, the gradient of func at x_curr
-#' @param lineSearchMaxSteps (defaults to 100) maximum number of iterations before stopping
+#' @param lineSearchMaxSteps maximum number of iterations before stopping
 #' @param ... extra parameters passed on to func
 #' @examples 
 #' # simple 1D quadratic function optimization
@@ -19,7 +19,7 @@
 #' 
 #' lineSearch_NAPA(x_curr = c(2.05), dk = c(-0.2), func=function(x) { -prod(dpois(c(1,2,3), x))})
 #' 
-lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, tolerance=10^-8, lineSearchMaxSteps = 100, ...) {
+lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, tolerance=10^-8, lineSearchMaxSteps = 10, ...) {
   
   delta <- 0.5#*2^-log(1+stepMod)
   alpha <- 0.05
@@ -61,9 +61,9 @@ lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, tolerance
     while(lineSearching) {
       lineSearchSteps <- lineSearchSteps + 1
       if(lineSearchSteps > lineSearchMaxSteps) {
-        if(gg > tolerance) {
-          warning("WARNING: exceeded lineSearchMaxSteps, is lineSearchMaxSteps too small?")
-        }
+        # if(gg > tolerance) {
+        #   warning("WARNING: exceeded lineSearchMaxSteps, is lineSearchMaxSteps too small?")
+        # }
         if(f_next > f_curr) stop("ERROR: lineSearch returned larger function value")
         return(list(x_next=x_best, f_next=f_best, iterations=lineSearchSteps))
       }

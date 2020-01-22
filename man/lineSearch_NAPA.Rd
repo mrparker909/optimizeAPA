@@ -5,7 +5,7 @@
 \title{lineSearch_NAPA}
 \usage{
 lineSearch_NAPA(x_curr, dk, func, grad_Fx = NULL, stepMod = 0,
-  tolerance = 10^-8, lineSearchMaxSteps = 100, ...)
+  tolerance = 10^-8, lineSearchMaxSteps = 10, ...)
 }
 \arguments{
 \item{x_curr}{starting x value}
@@ -16,7 +16,7 @@ lineSearch_NAPA(x_curr, dk, func, grad_Fx = NULL, stepMod = 0,
 
 \item{grad_Fx}{(defaults to NULL) if not NULL, the gradient of func at x_curr}
 
-\item{lineSearchMaxSteps}{(defaults to 100) maximum number of iterations before stopping}
+\item{lineSearchMaxSteps}{maximum number of iterations before stopping}
 
 \item{...}{extra parameters passed on to func}
 }
