@@ -16,20 +16,35 @@ updateList <- function(new_el, old_list = list(), M = 1) {
 #' @param thelist the list to check for NA head
 #' @export
 carryForwardNA <- function(thelist) {
-  if(any(is.na(thelist[[length(thelist)]]))) { stop("ERROR: NA in last list position, no carry forward possible") }
-  
+  if(all(is.na(unlist(thelist)))) { stop("ERROR: every element of list is NA, no carry forward possible") }
+
   l = length(thelist)
   i = 2
   while(any(is.na(thelist)) & i <= l) {
     if(!any(is.na(thelist[[i]])) &
-       any(is.na(thelist[[1+i-2]]))) {
-      thelist[[1+i-2]] <- thelist[[i]]
+       any(is.na(thelist[[i-1]]))) {
+      thelist[[i-1]] <- thelist[[i]]
     }
-    i = i+1 
+    i = i+1
     if(i>l) { i=2 }
   }
   if(any(is.na(thelist[[1]]))) { stop("ERROR: NA in list position 1, maybe increase precBits") }
   return(thelist)
+
+  # if(any(is.na(thelist[[length(thelist)]]))) { stop("ERROR: NA in last list position, no carry forward possible") }
+  # 
+  # l = length(thelist)
+  # i = 2
+  # while(any(is.na(thelist)) & i <= l) {
+  #   if(!any(is.na(thelist[[i]])) &
+  #      any(is.na(thelist[[1+i-2]]))) {
+  #     thelist[[1+i-2]] <- thelist[[i]]
+  #   }
+  #   i = i+1 
+  #   if(i>l) { i=2 }
+  # }
+  # if(any(is.na(thelist[[1]]))) { stop("ERROR: NA in list position 1, maybe increase precBits") }
+  # return(thelist)
 }
 
 # calculate gradient using finite difference method (requires 2*N function evaluations, where N is the dimension of x)
