@@ -182,8 +182,8 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
       save_df[1,3] = as.numeric(f_list[[2]])
       
       for(i in 1:length(starts)) {
-        save_df[1,2+i] = as.numeric(x_list[[1]][i])
-        save_df[1,2+length(starts)+i] = as.numeric(x_list[[2]][i])
+        save_df[1,3+i] = as.numeric(x_list[[1]][i])
+        save_df[1,3+length(starts)+i] = as.numeric(x_list[[2]][i])
       }
       
       write.csv(x = save_df, file = outFile, quote = F, row.names = F)
