@@ -1,6 +1,16 @@
 context("Testing DFP Algorithms")
 
 test_that("optim_DFP_NAPA", {
+  # if(require(redNMix)) {
+  #   require(Rmpfr)
+  #   ll = function(par, x) {
+  #     a = sum(redNMix::drbinomAPA(x = x, size = x:(2*x), prob = par[1], red = 10, precBits = 1000))
+  #     b = redNMix::drpoisAPA(x = x, lambda = par[2], red = 10, precBits = 1000)
+  #     -a*b 
+  #   }
+  #   
+  # }
+  
   op1 <- optim_DFP_NAPA(15, func=function(x){(x-10)^2}, tolerance = 10^-8)
   expect_equal(as.numeric(abs(op1$x-10)) < 10^-8, TRUE)
   
@@ -96,7 +106,7 @@ test_that("optim_DFP_APA", {
   par     <- c(1,2,3,4,5)
   centers <- c(5,4,3,2,1)
 
-  op1 <- optim_DFP_APA(starts = par, func = funND, centers=centers, precBits=precBits, maxSteps = 300, lineSearchMaxSteps = 200)
+  op1 <- optim_DFP_APA(starts = par, func = funND, centers=centers, precBits=precBits, maxSteps = 300, lineSearchMaxSteps = 200, outFile = "./test_outputFile.csv")
   expect_equal(as.numeric(abs(op1$x-centers)) < 10^-1, c(TRUE,TRUE,TRUE,TRUE,TRUE))
- 
+  expect_equal(file.exists("./test_outputFile.csv"), T)
 })

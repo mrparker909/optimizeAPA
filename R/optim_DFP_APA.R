@@ -19,6 +19,7 @@
 #' @param lineSearchMaxSteps maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).
 #' @param keepValues if TRUE will return all visited values during the optimization, rather than only the final values.
 #' @param Memory maximum number of iterations to remember (default is 100)
+#' @param outFile if not NULL, name of file to save results to (will be overwritten at each iteration).
 #' @param ... extra parameters passed on to func
 #' @export
 #' @examples 
@@ -69,7 +70,7 @@
 #'   sum((par-center)^2)
 #' } 
 #' optim_DFP_APA(starts = c(0,0,0,0,0), func = funcND, center=c(1,2,3,4,5))
-optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, Memory=100, ...) {
+optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, Memory=100, outFile=NULL, ...) {
   if(class(tolerance)!="mpfr") {
     tolerance <- Rmpfr::mpfr(tolerance, precBits)
   }
@@ -164,6 +165,28 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
     # check for convergence
     if( all(abs(g_list[[1]]) < tolerance)) {#two^(-precBits/2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {
       converged = TRUE
+    }
+    
+    if(!is.null(outFile)) {
+      df_names = c(
+        "iterationNumber",
+        "fx",
+        "prev_fx",
+        paste0("par_", 1:length(starts)),
+        paste0("prev_par_", 1:length(starts))
+        )
+      save_df = as.data.frame(matrix(nrow=0, ncol=length(df_names)))
+      colnames(save_df) = df_names
+      save_df[1,1] = steps
+      save_df[1,2] = as.numeric(f_list[[1]])
+      save_df[1,3] = as.numeric(f_list[[2]])
+      
+      for(i in 1:length(starts)) {
+        save_df[1,2+i] = as.numeric(x_list[[1]][i])
+        save_df[1,2+length(starts)+i] = as.numeric(x_list[[2]][i])
+      }
+      
+      write.csv(x = save_df, file = outFile, quote = F, row.names = F)
     }
   }
   
