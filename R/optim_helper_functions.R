@@ -30,21 +30,6 @@ carryForwardNA <- function(thelist) {
   }
   if(any(is.na(thelist[[1]]))) { stop("ERROR: NA in list position 1, maybe increase precBits") }
   return(thelist)
-
-  # if(any(is.na(thelist[[length(thelist)]]))) { stop("ERROR: NA in last list position, no carry forward possible") }
-  # 
-  # l = length(thelist)
-  # i = 2
-  # while(any(is.na(thelist)) & i <= l) {
-  #   if(!any(is.na(thelist[[i]])) &
-  #      any(is.na(thelist[[1+i-2]]))) {
-  #     thelist[[1+i-2]] <- thelist[[i]]
-  #   }
-  #   i = i+1 
-  #   if(i>l) { i=2 }
-  # }
-  # if(any(is.na(thelist[[1]]))) { stop("ERROR: NA in list position 1, maybe increase precBits") }
-  # return(thelist)
 }
 
 # calculate gradient using finite difference method (requires 2*N function evaluations, where N is the dimension of x)
@@ -71,9 +56,7 @@ grad_FD_APA <- function(func, x_val, stepMod=0, precBits=64, ...) {
     { x <- Rmpfr::mpfr(x_val, precBits=precBits) } 
   else 
     { x <- x_val }
-  # stepsize <- max(Rmpfr::mpfr(.Machine$double.eps, precBits=precBits)^(1/3)*10^(-log(1+stepMod)), #Rmpfr::mpfr(.Machine$double.eps, precBits=precBits)^Rmpfr::mpfr(1/3), precBits=precBits)
-  #                 Rmpfr::mpfr(2,precBits=precBits)^(-precBits+2)
-  #                 )
+  
   stepsize <- Rmpfr::mpfr(2,precBits=precBits)^(-precBits/2-stepMod+2)
   len_x <- length(x)
   delta_f <- list()
@@ -113,7 +96,6 @@ dpois_APA <- function(x, lambda, precBits=128) {
   dens <- exp(-1*lambda_apa)*lambda_apa^(x_apa)/Rmpfr::mpfr(gmp::factorialZ(x),precBits)
   dens[ind]  <- 0
   dens[ind2] <- 0
-  #dens <- Rmpfr::mpfr(dens, precBits=precBits)
   
   return(dens)
 }
@@ -135,7 +117,7 @@ plogis_APA <- function(x, location = 0, scale=1, precBits=128) {
   
   # calculate density
   # F(x) = 1 / (1 + exp(-(x-m)/s))
-  dens <- 1 / (1+exp(x_apa))#1*(x_apa-m_apa)/s_apa))
+  dens <- 1 / (1+exp(x_apa))
   return(dens)
 }
 
@@ -160,7 +142,6 @@ dbinom_APA <- function(x, size, prob, precBits=128) {
   else{ prob_apa <- prob }
   q_apa <- Rmpfr::mpfr(1, precBits=precBits)-prob_apa
   
-  #dens <- Rmpfr::chooseMpfr(size,x) * (prob_apa)^(x_apa) * (q_apa)^(size-x_apa)
   dens <- gmp::chooseZ(size,x) * (prob_apa)^(x_apa) * (q_apa)^(size-x_apa)
   dens <- Rmpfr::mpfr(dens, precBits=precBits)
   return(dens)
@@ -174,15 +155,16 @@ dbinom_APA <- function(x, size, prob, precBits=128) {
 #' @param optimOutput The result of running an optimization algorithm with keepValues=TRUE
 #' @param variable Default is NULL, will print convergence plot for all variables, otherwise an integer vector (such as c(1,3)) indicating which variables to print convergence plot for.
 #' @param digits Default is 5. Number of digits to print on convergence plot.
+#' @param labels If TRUE, print function values as labels on the plot.
 #' @examples 
 #' # N dimensional quadratic
 #' funcND <- function(par, center, precBits=64) {
 #'   par <- Rmpfr::mpfr(par, precBits)
-#'   sum((par-center)^2)
+#'   log(sum(exp((par-center)^2)))
 #' } 
 #' opt <- optimizeAPA::optim_DFP_APA(starts = c(0,0,0), func = funcND, center=c(1,2,3), keepValues=TRUE)
-#' plotConvergence(opt, variable=c(1,3))
-plotConvergence <- function(optimOutput, variable=NULL, digits=5) {
+#' plotConvergence(opt, variable=c(1,3), labels=F)
+plotConvergence <- function(optimOutput, variable=NULL, digits=5, labels=T) {
   require(ggplot2)
   op <- optimOutput
   len <- length(op$f)
@@ -203,13 +185,32 @@ plotConvergence <- function(optimOutput, variable=NULL, digits=5) {
     }
   }
   
-  ggplot(data=dat) + 
-    geom_point(aes(x=xv, y=steps, color=FunctionValue), size=4) +
+  xv_final <- unlist(lapply(op$x[[1]], FUN = as.numeric ))
+  if(!is.null(variable)) {
+    xv_final <- xv_final[variable] 
+  }
+
+  
+  dat_text <- data.frame(
+    label = paste("Final parameter value:",format(xv_final,digits=digits)),
+    par   = unique(dat$par)
+  )
+  
+  p <- ggplot(data=dat, aes(group=par)) + 
     geom_path(aes(x=xv, y=steps),
-              arrow = arrow(length=unit(0.30,"cm"), ends="first", type = "open"), color="forestgreen") +
-    geom_label(aes(label=format(FunctionValue,digits=digits), x=xv, y=steps+0.5), size=2, alpha=0.6) +
+              arrow = arrow(length=unit(0.03,"npc"), angle=40, ends="first", type = "closed"), color="forestgreen", size=1.25) +
+    geom_point(aes(x=xv, y=steps, color=FunctionValue), size=2.75) +
     facet_wrap(.~par, scales = "free") +
+    geom_text(data = dat_text,
+      mapping = aes(x = -Inf, y = op$steps+1, label = label),
+      hjust   = -0.5) +
     xlab("Visited x Values") + ylab("Algorithm Step") +
-    ggtitle("Convergence Path") + theme_bw()
+    ggtitle("Convergence Path") + theme_classic() + scale_y_continuous(breaks=1:op$steps)
+  
+  if(labels) {
+    p <- p + geom_label(aes(label=format(FunctionValue,digits=digits), x=xv, y=steps+0.5), size=2, alpha=0.6)
+  }
+  
+  plot(p)
 }
 

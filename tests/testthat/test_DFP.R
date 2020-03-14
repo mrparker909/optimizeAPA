@@ -49,8 +49,10 @@ test_that("optim_DFP_NAPA", {
   par     <- c(1,2,3,4,5)
   centers <- c(5,4,3,2,1)
 
-  op1 <- optim_DFP_NAPA(starts = par, func = funND, centers=centers, tolerance = 10^-8, maxSteps = 200)
+  op1 <- optim_DFP_NAPA(starts = par, func = funND, centers=centers, tolerance = 10^-8, maxSteps = 200, outFile = "./test_outputFile.csv")
   expect_equal(as.numeric(abs(op1$x-centers)) < 10^-2, c(TRUE,TRUE,TRUE,TRUE,TRUE))
+  expect_equal(file.exists("./test_outputFile.csv"), T)
+  file.remove("./test_outputFile.csv")
   
   if(require(redNMix)) {
     op1 <- redNMix::fit_red_Nmix_closed(nit = matrix(c(5,5,5),nrow=1), lambda_site_covariates = NULL, pdet_site_covariates = NULL, red = c(1), K = matrix(10, ncol=3), starts = c(1,0), method="DFP", tolerance=10^-4)
@@ -109,4 +111,19 @@ test_that("optim_DFP_APA", {
   op1 <- optim_DFP_APA(starts = par, func = funND, centers=centers, precBits=precBits, maxSteps = 300, lineSearchMaxSteps = 200, outFile = "./test_outputFile.csv")
   expect_equal(as.numeric(abs(op1$x-centers)) < 10^-1, c(TRUE,TRUE,TRUE,TRUE,TRUE))
   expect_equal(file.exists("./test_outputFile.csv"), T)
+  file.remove("./test_outputFile.csv")
+})
+
+
+test_that("optim_DFP_NAPA tolerance", {
+  target=10.22222
+  op1 <- optim_DFP_NAPA(15, func=function(x){exp((x-target)^2)}, tolerance = 10^-1)
+  op2 <- optim_DFP_NAPA(15, func=function(x){exp((x-target)^2)}, tolerance = 10^-2)
+  op3 <- optim_DFP_NAPA(15, func=function(x){exp((x-target)^2)}, tolerance = 10^-3)
+  op4 <- optim_DFP_NAPA(15, func=function(x){exp((x-target)^2)}, tolerance = 10^-8, maxSteps = 200)
+  expect_equal(as.numeric(abs(op1$x-target)) > as.numeric(abs(op2$x-target)), TRUE)
+  expect_equal(as.numeric(abs(op2$x-target)) > as.numeric(abs(op3$x-target)), TRUE)
+  expect_equal(as.numeric(abs(op3$x-target)) > as.numeric(abs(op4$x-target)), TRUE)
+  
+  
 })

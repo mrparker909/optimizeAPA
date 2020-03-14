@@ -1,10 +1,11 @@
 Package: optimizeAPA
 Type: Package
 Title: Arbitrary Precision Optimization Algorithms
-Version: 0.2.3
+Version: 0.2.4
 Author: Matthew R. P. Parker
 Maintainer: <mrparker909@gmail.com>
-Description: Arbitrary Precision Arithmetic (APA) optimization algorithms implemented in R. The purpose of this package is to provide a tool for multidimensional optimization of arbitrary precision functions. This package makes extensive use of the arbitrary precision arithmetic package Rmpfr (which provides a one dimensional APA optimization algorithm).
+Description: Arbitrary Precision Arithmetic (APA) optimization algorithms implemented in R. The purpose of this package is to provide a tool for multidimensional optimization of arbitrary precision functions. This package makes extensive use of the arbitrary precision arithmetic package Rmpfr.
+URL: https://github.com/mrparker909/optimizeAPA
 License: 
 Encoding: UTF-8
 LazyData: true

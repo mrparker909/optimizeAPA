@@ -28,12 +28,14 @@ line searching algorithm used inside APA optimization algorithms.
 \examples{
 # simple 1D quadratic function optimization
 lineSearch_APA(x_curr = 1, dk = -0.2, lineSearchMaxSteps = 100, func = function(x, precBits) {Rmpfr::mpfr(x,precBits)^2})
+lineSearch_APA(x_curr = 1, dk = -0.2, lineSearchMaxSteps = 100, func = function(x, precBits) {Rmpfr::mpfr(x-1,precBits)^2})
 
 # simple 2D quadratic function optimization
 func2 <- function(par, centerx=0, centery=0, precBits=64) {
   par <- Rmpfr::mpfr(par, precBits)
   (par[1]-centerx)^2+(par[2]-centery)^2
 }
+
 lineSearch_APA(x_curr = c(.015,-.015), dk = c(-0.2,0.2), func=func2)
 
 lineSearch_APA(x_curr = c(2.06), dk = c(-0.2), func=function(x, precBits) { 

@@ -4,13 +4,14 @@
 \alias{optim_DFP_NAPA}
 \title{optim_DFP_NAPA}
 \usage{
-optim_DFP_NAPA(starts, func, tolerance = 10^-10, maxSteps = 100,
-  lineSearchMaxSteps = 100, keepValues = FALSE, Memory = 100, ...)
+optim_DFP_NAPA(starts, func, tolerance = 10^-8, maxSteps = 100,
+  lineSearchMaxSteps = 100, keepValues = FALSE, Memory = 100,
+  outFile = NULL, ...)
 }
 \arguments{
-\item{starts}{starting values for function}
+\item{starts}{vector of starting values for the function parameters}
 
-\item{func}{function to optimize}
+\item{func}{function to optimize, first argument is a vector containing the parameters to be optimized over}
 
 \item{tolerance}{tolerance for determining stopping condition (how close to zero is considered small enough for the gradient). Note that smaller tolerance may require much larger maxSteps and lineSearchMaxSteps.}
 
@@ -18,18 +19,20 @@ optim_DFP_NAPA(starts, func, tolerance = 10^-10, maxSteps = 100,
 
 \item{lineSearchMaxSteps}{maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).}
 
-\item{keepValues}{if TRUE will return all visited values during the optimization, rather than only the final values.}
+\item{keepValues}{if TRUE will return all visited values (up to the number specified by Memory) during the optimization, rather than only the final values.}
 
 \item{Memory}{maximum number of iterations to remember (default is 100)}
+
+\item{outFile}{if not NULL, name of file to save results to (will be overwritten at each iteration).}
 
 \item{...}{extra parameters passed on to func}
 }
 \description{
-optim_DFP_NAPA non-arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm
+optim_DFP_NAPA is a non-arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm
 }
 \examples{
 # (1D example, compared against stats::optim)
-optim_DFP_NAPA(-15.253, func=function(x){(x-10)^2}, maxSteps = 1000, tolerance = 10^-6)
+optim_DFP_NAPA(-15.253, func=function(x){(x-10)^2}, maxSteps = 10, tolerance = 10^-6)
 optim(par = 15, fn = function(x){(x-10)^2}, hessian = TRUE,   method="BFGS")
 
 # (1D example, compared against stats::optim)
@@ -40,7 +43,7 @@ fun <- function(par, xdat) {
 xdat <- c(8,11)#rpois(n = 2, lambda = 10)
 starts <- 10
 
-optim_DFP_NAPA(starts, fun, xdat=xdat, tolerance=10^-8)
+optim_DFP_NAPA(starts, fun, xdat=xdat, tolerance=10^-9)
 optim(par = starts, fn = fun, hessian = TRUE, method="BFGS", xdat=xdat)
 
 # (2D example, compared against stats::optim)
@@ -53,6 +56,6 @@ xdat2D <- c(1,2,3)
 ydat2D <- c(5,8,9)
 starts2D <- log(c(5,7))
 
-op1 <- optim_DFP_NAPA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, tolerance=10^-6)
+op1 <- optim_DFP_NAPA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, tolerance=10^-7)
 op2 <- optim(par = starts2D, fn = fun2D, hessian = TRUE, method="BFGS", xdat=xdat2D, ydat=ydat2D)
 }

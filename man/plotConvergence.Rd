@@ -4,7 +4,7 @@
 \alias{plotConvergence}
 \title{plotConvergence}
 \usage{
-plotConvergence(optimOutput, variable = NULL, digits = 5)
+plotConvergence(optimOutput, variable = NULL, digits = 5, labels = T)
 }
 \arguments{
 \item{optimOutput}{The result of running an optimization algorithm with keepValues=TRUE}
@@ -12,6 +12,8 @@ plotConvergence(optimOutput, variable = NULL, digits = 5)
 \item{variable}{Default is NULL, will print convergence plot for all variables, otherwise an integer vector (such as c(1,3)) indicating which variables to print convergence plot for.}
 
 \item{digits}{Default is 5. Number of digits to print on convergence plot.}
+
+\item{labels}{If TRUE, print function values as labels on the plot.}
 }
 \description{
 Plot the path to convergence of an optimization algorithm (such as optim_DFP_APA).
@@ -20,8 +22,8 @@ Plot the path to convergence of an optimization algorithm (such as optim_DFP_APA
 # N dimensional quadratic
 funcND <- function(par, center, precBits=64) {
   par <- Rmpfr::mpfr(par, precBits)
-  sum((par-center)^2)
+  log(sum(exp((par-center)^2)))
 } 
 opt <- optimizeAPA::optim_DFP_APA(starts = c(0,0,0), func = funcND, center=c(1,2,3), keepValues=TRUE)
-plotConvergence(opt, variable=c(1,3))
+plotConvergence(opt, variable=c(1,3), labels=F)
 }

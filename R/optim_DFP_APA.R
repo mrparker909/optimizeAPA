@@ -1,23 +1,12 @@
-# goal: implement DFP algorithm with arbitrary precision arithmetic
-# 0) initial guess xk = starts, initial hessian Bk = Ipxp
-# 1) solve for pk: Bk * pk = -grad f(xk) (use inverse(Bk), Ipxp in first iteration, otherwise from step 4)
-# 2) line search to find step size a ~= argmin_a f(xk + a*pk)
-# 3) update values: set sk = ak * pk, update xnext = xk + sk
-#    yk = grad f(xnext) - grad f(xk)
-# 4) calculate inverse(Bnext) http://www.stat.cmu.edu/~ryantibs/convexopt-F13/lectures/11-QuasiNewton.pdf
-#    p = delta x= x_next - x_curr, 
-#    q = delta grad f(x) = grad f(x_next) - grad f(x_curr)
-#    iB_next + p %*% t(p) / c(t(p) %*% q) - iB %*% q %*% t(q) %*% iB / c(t(q) %*% iB %*% q)
-# 5) stop algorithm if ||grad (f(xnext))|| is close enough to zero, otherwise goto step 1
 #' @title optim_DFP_APA
-#' @description optim_DFP_APA arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm. The function func must take precBits as an arguement, to inform Rmpfr of the precision.
-#' @param starts starting values for function parameters
+#' @description optim_DFP_APA is an arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm. The function to be optimized, func, must take precBits as an arguement, to inform Rmpfr of the precision being used.
+#' @param starts vector of starting values for the function parameters
 #' @param func   function to optimize, first argument is a vector containing the parameters to be optimized over. Must also take as argument precBits.
 #' @param tolerance tolerance for determining stopping condition (how close to zero is considered small enough for the gradient). Note that smaller tolerance may require much larger maxSteps and lineSearchMaxSteps. Tolerance should either be larger than 10^-10, or an arbitrary precision number, such as: tolerance=Rmpfr::mpfr(10^-20, precBits=128)
-#' @param precBits determines number of bits of precision for all numbers and calculations.
+#' @param precBits determines number of bits of precision for all numbers and calculations, for standard double precision use precBits=53.
 #' @param maxSteps maximum number of iterations for the optimization algorithm
 #' @param lineSearchMaxSteps maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).
-#' @param keepValues if TRUE will return all visited values during the optimization, rather than only the final values.
+#' @param keepValues if TRUE will return all visited values (up to the number specified by Memory) during the optimization, rather than only the final values.
 #' @param Memory maximum number of iterations to remember (default is 100)
 #' @param outFile if not NULL, name of file to save results to (will be overwritten at each iteration).
 #' @param ... extra parameters passed on to func
@@ -61,16 +50,48 @@
 #' starts2D <- log(c(5,7))
 #' 
 #' trueValues <- c(log(mean(xdat2D)), log(mean(ydat2D)))
-#' op1 <- optim_DFP_APA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, precBits=64)
+#' op1 <- optim_DFP_APA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, precBits=64, keepValues=T)
 #' op2 <- optim(par = starts2D, fn = fun2D2, hessian = TRUE, method="BFGS", xdat=xdat2D, ydat=ydat2D)
-#' 
+#'
+#' plotConvergence(op1, digits=20)
+#'   
 #' # N dimensional quadratic
 #' funcND <- function(par, center, precBits=64) {
 #'   par <- Rmpfr::mpfr(par, precBits)
 #'   sum((par-center)^2)
 #' } 
-#' optim_DFP_APA(starts = c(0,0,0,0,0), func = funcND, center=c(1,2,3,4,5))
+#' funcND2 <- function(par, center) {
+#'   sum((par-center)^2)
+#' } 
+#' 
+#' op1 <- optim_DFP_APA(starts = c(0,0,0,0,0), func = funcND, center=c(1,2,3,4,5), keepValues=T, Memory=10)
+#' optim(par = c(0,0,0,0,0), fn = funcND2, hessian = TRUE, method="BFGS", center=c(1,2,3,4,5))
+#' 
+#' plotConvergence(op1)
+#' 
+#'
+#' funcexpND <- function(par, center, precBits=64) {
+#'   par <- Rmpfr::mpfr(par, precBits)
+#'   log(sum(exp((par-center)^2)))
+#' } 
+#' 
+#' op1 <- optim_DFP_APA(starts = c(0,0,0,0,0), func = funcexpND, center=c(1,-2,3,-4,5), keepValues=T, Memory=100)
+#' plotConvergence(op1)
+
 optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, Memory=100, outFile=NULL, ...) {
+  
+  # Implementation of DFP algorithm with arbitrary arithmetic:
+  # 0) initial guess xk = starts, initial hessian Bk = Ipxp
+  # 1) solve for pk: Bk * pk = -grad f(xk) (use inverse(Bk), Ipxp in first iteration, otherwise from step 4)
+  # 2) line search to find step size a ~= argmin_a f(xk + a*pk)
+  # 3) update values: set sk = ak * pk, update xnext = xk + sk
+  #    yk = grad f(xnext) - grad f(xk)
+  # 4) calculate inverse(Bnext) http://www.stat.cmu.edu/~ryantibs/convexopt-F13/lectures/11-QuasiNewton.pdf
+  #    p = delta x= x_next - x_curr, 
+  #    q = delta grad f(x) = grad f(x_next) - grad f(x_curr)
+  #    iB_next + p %*% t(p) / c(t(p) %*% q) - iB %*% q %*% t(q) %*% iB / c(t(q) %*% iB %*% q)
+  # 5) stop algorithm if ||grad (f(xnext))|| is close enough to zero, otherwise goto step 1
+  
   if(class(tolerance)!="mpfr") {
     tolerance <- Rmpfr::mpfr(tolerance, precBits)
   }
@@ -109,17 +130,17 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
     steps <- steps+1
 
     # 1) solve for pk (direction vector)
-    pk <- -1 * iB_list[[1]] %*% g_list[[1]]
+    pk     <- -1 * iB_list[[1]] %*% g_list[[1]]
     p_list <- updateList(pk, p_list, M = Memory)
     
     # 2) line search to find step size t ~= argmin_t f(xk + t*pk)
     ls <- lineSearch_APA(x_curr = x_list[[1]], 
-                          dk = p_list[[1]], 
-                          func = func,
-                          grad_Fx = g_list[[1]],
-                          precBits = precBits,
-                          stepMod = steps,
-                          lineSearchMaxSteps = lineSearchMaxSteps, ...)
+                         dk = p_list[[1]], 
+                         func = func,
+                         grad_Fx = g_list[[1]],
+                         precBits = precBits,
+                         stepMod = steps,
+                         lineSearchMaxSteps = lineSearchMaxSteps, ...)
     f_next <- ls$f_next
     x_next <- ls$x_next
     
@@ -163,7 +184,7 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
     iB_list <- carryForwardNA(updateList(new_el = iB_next, iB_list, M = Memory))
     
     # check for convergence
-    if( all(abs(g_list[[1]]) < tolerance)) {#two^(-precBits/2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {
+    if( all(sqrt(abs(g_list[[1]] * g_list[[1]])) < tolerance) ) {#all(abs(g_list[[1]]) < tolerance)) {#two^(-precBits/2))) {#Rmpfr::mpfr(0.5,precBits)^(precBits-2))) {
       converged = TRUE
     }
     

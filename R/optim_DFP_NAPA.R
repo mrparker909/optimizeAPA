@@ -1,28 +1,18 @@
-# goal: implement DFP algorithm
-# 0) initial guess xk = starts, initial hessian Bk = Ipxp
-# 1) solve for pk: Bk * pk = -grad f(xk) (use inverse(Bk), Ipxp in first iteration, otherwise from step 4)
-# 2) line search to find step size a ~= argmin_a f(xk + a*pk)
-# 3) update values: set sk = ak * pk, update xnext = xk + sk
-#    yk = grad f(xnext) - grad f(xk)
-# 4) calculate inverse(Bnext) http://www.stat.cmu.edu/~ryantibs/convexopt-F13/lectures/11-QuasiNewton.pdf
-#    p = delta x= x_next - x_curr, 
-#    q = delta grad f(x) = grad f(x_next) - grad f(x_curr)
-#    iB_next + p %*% t(p) / c(t(p) %*% q) - iB %*% q %*% t(q) %*% iB / c(t(q) %*% iB %*% q)
-# 5) stop algorithm if ||grad (f(xnext))|| is close enough to zero, otherwise goto step 1
 #' @title optim_DFP_NAPA
-#' @description optim_DFP_NAPA non-arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm
-#' @param starts starting values for function
-#' @param func   function to optimize
+#' @description optim_DFP_NAPA is a non-arbitrary precision implementation of DFP (Davidon-Fletcher-Powel) quasi-newton optimization algorithm
+#' @param starts vector of starting values for the function parameters
+#' @param func   function to optimize, first argument is a vector containing the parameters to be optimized over
 #' @param tolerance tolerance for determining stopping condition (how close to zero is considered small enough for the gradient). Note that smaller tolerance may require much larger maxSteps and lineSearchMaxSteps.
 #' @param maxSteps maximum number of iterations for the optimization algorithm
 #' @param lineSearchMaxSteps maximum number of iterations for each line search (occurs for every iteration of the optimization algorithm).
-#' @param keepValues if TRUE will return all visited values during the optimization, rather than only the final values.
+#' @param keepValues if TRUE will return all visited values (up to the number specified by Memory) during the optimization, rather than only the final values.
 #' @param Memory maximum number of iterations to remember (default is 100)
+#' @param outFile if not NULL, name of file to save results to (will be overwritten at each iteration).
 #' @param ... extra parameters passed on to func
 #' @export
 #' @examples 
 #' # (1D example, compared against stats::optim)
-#' optim_DFP_NAPA(-15.253, func=function(x){(x-10)^2}, maxSteps = 1000, tolerance = 10^-6)
+#' optim_DFP_NAPA(-15.253, func=function(x){(x-10)^2}, maxSteps = 10, tolerance = 10^-6)
 #' optim(par = 15, fn = function(x){(x-10)^2}, hessian = TRUE,   method="BFGS")
 #' 
 #' # (1D example, compared against stats::optim)
@@ -33,7 +23,7 @@
 #' xdat <- c(8,11)#rpois(n = 2, lambda = 10)
 #' starts <- 10
 #' 
-#' optim_DFP_NAPA(starts, fun, xdat=xdat, tolerance=10^-8)
+#' optim_DFP_NAPA(starts, fun, xdat=xdat, tolerance=10^-9)
 #' optim(par = starts, fn = fun, hessian = TRUE, method="BFGS", xdat=xdat)
 #' 
 #' # (2D example, compared against stats::optim)
@@ -46,9 +36,22 @@
 #' ydat2D <- c(5,8,9)
 #' starts2D <- log(c(5,7))
 #' 
-#' op1 <- optim_DFP_NAPA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, tolerance=10^-6)
+#' op1 <- optim_DFP_NAPA(starts2D, fun2D, xdat=xdat2D, ydat=ydat2D, tolerance=10^-7)
 #' op2 <- optim(par = starts2D, fn = fun2D, hessian = TRUE, method="BFGS", xdat=xdat2D, ydat=ydat2D)
-optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, Memory=100, ...) {
+optim_DFP_NAPA <- function(starts, func, tolerance = 10^-8, maxSteps=100, lineSearchMaxSteps=100, keepValues=FALSE, Memory=100, outFile=NULL, ...) {
+  
+  # Implementation of DFP algorithm:
+  # 0) initial guess xk = starts, initial hessian Bk = Ipxp
+  # 1) solve for pk: Bk * pk = -grad f(xk) (use inverse(Bk), Ipxp in first iteration, otherwise from step 4)
+  # 2) line search to find step size a ~= argmin_a f(xk + a*pk)
+  # 3) update values: set sk = ak * pk, update xnext = xk + sk
+  #    yk = grad f(xnext) - grad f(xk)
+  # 4) calculate inverse(Bnext) http://www.stat.cmu.edu/~ryantibs/convexopt-F13/lectures/11-QuasiNewton.pdf
+  #    p = delta x= x_next - x_curr, 
+  #    q = delta grad f(x) = grad f(x_next) - grad f(x_curr)
+  #    iB_next + p %*% t(p) / c(t(p) %*% q) - iB %*% q %*% t(q) %*% iB / c(t(q) %*% iB %*% q)
+  # 5) stop algorithm if ||grad (f(xnext))|| is close enough to zero, otherwise goto step 1
+  
   # 0) initial guess
   xk  <- starts
   dim(xk) <- c(length(starts),1)
@@ -96,8 +99,8 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
     g_list <- carryForwardNA(updateList(grad_FD_NAPA(func = func, x_val = x_next, stepMod=steps, ...), g_list, M=Memory))
     y_list <- carryForwardNA(updateList(g_list[[1]]-g_list[[2]], y_list, M = Memory))
     
-    if(all(x_list[[1]]*x_list[[1]] < .Machine$double.eps)) {
-      warning("WARNING: difference in x values is smaller than machine precision. Consider using optim_DFP_APA for higher precision.")
+    if(all(x_list[[1]]*x_list[[1]] < 2*.Machine$double.eps)) {
+      warning("WARNING: difference in x values is very small. Consider using optim_DFP_APA for higher precision.")
       converged=TRUE
     }
   
@@ -118,10 +121,32 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-10, maxSteps=100, lineS
     if( all(sqrt(abs(g_list[[1]] * g_list[[1]])) < tolerance) ) {
       converged = TRUE
     }
+    
+    if(!is.null(outFile)) {
+      df_names = c(
+        "iterationNumber",
+        "fx",
+        "prev_fx",
+        paste0("par_", 1:length(starts)),
+        paste0("prev_par_", 1:length(starts))
+      )
+      save_df = as.data.frame(matrix(nrow=0, ncol=length(df_names)))
+      colnames(save_df) = df_names
+      save_df[1,1] = steps
+      save_df[1,2] = as.numeric(f_list[[1]])
+      save_df[1,3] = as.numeric(f_list[[2]])
+      
+      for(i in 1:length(starts)) {
+        save_df[1,3+i] = as.numeric(x_list[[1]][i])
+        save_df[1,3+length(starts)+i] = as.numeric(x_list[[2]][i])
+      }
+      
+      write.csv(x = save_df, file = outFile, quote = F, row.names = F)
+    }
   }
   
   if(steps >= maxSteps) {
-    warning("WARNING: did not converge, exceeded maxSteps, is maxSteps too small?")
+    warning("WARNING: exceeded maxSteps before convergence, is maxSteps too small?")
     converged = FALSE
     
     if(keepValues) {

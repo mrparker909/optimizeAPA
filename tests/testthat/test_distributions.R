@@ -11,7 +11,7 @@ test_that("dpois_APA", {
 })
 
 test_that("plogis_APA", {
-  expect_equal(as.numeric(plogis_APA(x = seq(-1,1,0.01))),plogis(q = seq(-1,1,0.01)))
-  expect_equal(as.numeric(plogis_APA(x = seq(-1,1,0.01), location = 5)),plogis(q = seq(-1,1,0.01), location = 5))
-  expect_equal(as.numeric(plogis_APA(x = seq(-1,1,0.01), location = 5, scale = 0.5)),plogis(q = seq(-1,1,0.01), location = 5, scale = 0.5))
+  expect_equal(as.numeric(plogis_APA(x = seq(-10,10,0.01))),plogis(q = seq(-10,10,0.01)))
+  expect_equal(as.numeric(plogis_APA(x = seq(-10,10,0.01), location = 5)),plogis(q = seq(-10,10,0.01), location = 5))
+  expect_equal(as.numeric(plogis_APA(x = seq(-10,10,0.01), location = 5, scale = 0.5)),plogis(q = seq(-10,10,0.01), location = 5, scale = 0.5))
 })
