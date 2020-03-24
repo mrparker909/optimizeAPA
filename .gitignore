@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+/profiling.R
+/testingErrors.R
+/tests/testthat/test_outputFile.csv

@@ -29,7 +29,7 @@
 #'  })
 lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=0, lineSearchMaxSteps = 100, ...) {
   
-  two <- Rmpfr::mpfr(2, precBits)
+  two   <- Rmpfr::mpfr(2, precBits)
   delta <- Rmpfr::mpfr(0.5, precBits)
   alpha <- Rmpfr::mpfr(0.05, precBits)
   if(class(x_curr)!="mpfr") { x_curr <- Rmpfr::mpfr(x_curr, precBits) }
@@ -53,10 +53,10 @@ lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=
   
   gg <- NULL
   if(is.null(grad_Fx)) {
-    gg <- abs(grad_FD_APA(func  = func,
-                          x_val = x_curr,
+    gg <- abs(grad_FD_APA(func     = func,
+                          x_val    = x_curr,
                           precBits = precBits, 
-                          stepMod = stepMod, ...) %*% dk)
+                          stepMod  = stepMod, ...) %*% dk)
   } else {
     if(class(grad_Fx)!="mpfr") { grad_Fx <- Rmpfr::mpfr(grad_Fx, precBits) }
     gg <- abs(grad_Fx %*% dk)
@@ -65,30 +65,37 @@ lineSearch_APA <- function(x_curr, dk, func, grad_Fx=NULL, precBits=64, stepMod=
   
   lineSearchSteps <- 0
   lineSearching = TRUE
-  while(lineSearching) {
-    lineSearchSteps <- lineSearchSteps + 1
-    if(lineSearchSteps > lineSearchMaxSteps) {
-      if(gg > two^(-precBits/2)) {
-        warning("WARNING: exceeded lineSearchMaxSteps, is lineSearchMaxSteps too small?")
+  if(f_next < f_curr - gg/2) {
+    lineSearching = FALSE
+  } else {
+    while(lineSearching) {
+      lineSearchSteps <- lineSearchSteps + 1
+      if(lineSearchSteps > lineSearchMaxSteps) {
+        # if(gg > two^(-precBits/2)) {
+        #   warning("WARNING: exceeded lineSearchMaxSteps, is lineSearchMaxSteps too small?")
+        # }
+        if(f_next > f_curr) stop("ERROR: lineSearch returned larger function value")
+        return(list(x_next=x_best, f_next=f_best, iterations=lineSearchSteps))
       }
-      if(f_next > f_curr) stop("ERROR: lineSearch returned larger function value")
-      return(list(x_next=x_best, f_next=f_best, iterations=lineSearchSteps))
-    }
-    if(any(is.na(f_next))) stop("ERROR: f_next is NaN")
-    if(any(is.na(f_curr))) stop("ERROR: f_curr is NaN")
-    if(any(is.na(gg))) stop("ERROR: gg is NaN")
-    if(f_next <  f_curr - alpha * t * gg) {
-      lineSearching = FALSE
-    } else {
-      t <- delta*t*2^-log(lineSearchSteps)
-      x_next <- x_curr + t * dk
-      f_next <- func(x_next, precBits=precBits, ...)
-      if(f_next < f_best) {
-        f_best <- f_next
-        x_best <- x_next
+      if(any(is.na(f_next))) stop("ERROR: f_next is NA")
+      if(any(is.na(f_curr))) stop("ERROR: f_curr is NA")
+      if(any(is.na(gg))) stop("ERROR: gg is NA")
+      if(f_next <  f_curr - alpha * t * gg) {
+        lineSearching = FALSE
+      } else {
+        mod <- two^-log(lineSearchSteps+stepMod)
+        t <- delta*t*mod
+        x_next <- x_curr + t * dk
+        f_next <- func(x_next, precBits=precBits, ...)
+        if(f_next < f_best) {
+          f_best <- f_next
+          x_best <- x_next
+        }
       }
     }
   }
+  
+  if(f_next > f_curr) stop("ERROR: lineSearch returned larger function value")
   return(list(x_next=x_best, f_next=f_best, iterations=lineSearchSteps))
 }
 

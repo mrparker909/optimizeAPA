@@ -86,3 +86,12 @@ op <- optim_DFP_APA(starts=0, func=quadratic, center=10, keepValues = TRUE)
 # convergence path plot:
 plotConvergence(op)
 ```
+
+
+
+
+# How to Cite
+
+Parker, M.R.P. (2020). optimizeAPA: An R Package for Arbitrary Precision Optimization of Multi-parameter Functions. R package version `r packageVersion("optimizeAPA")`. https://github.com/mrparker909/optimizeAPA
+
+

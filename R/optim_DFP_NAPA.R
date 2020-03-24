@@ -78,15 +78,15 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-8, maxSteps=100, lineSe
     steps <- steps+1
 
     # 1) solve for pk (direction vector)
-    pk <- -1 * iB_list[[1]] %*% g_list[[1]]
+    pk     <- -1 * iB_list[[1]] %*% g_list[[1]]
     p_list <- carryForwardNA(updateList(pk, p_list, M = Memory))
     
     # 2) line search to find step size t ~= argmin_t f(xk + t*pk)
-    ls <- lineSearch_NAPA(x_curr = x_list[[1]], 
-                          dk = p_list[[1]], 
-                          func = func,
-                          grad_Fx = g_list[[1]],
-                          stepMod = steps, 
+    ls <- lineSearch_NAPA(x_curr    = x_list[[1]], 
+                          dk        = p_list[[1]], 
+                          func      = func,
+                          grad_Fx   = g_list[[1]],
+                          stepMod   = steps, 
                           tolerance = tolerance,
                           lineSearchMaxSteps = lineSearchMaxSteps, ...)
     f_next <- ls$f_next
@@ -106,8 +106,8 @@ optim_DFP_NAPA <- function(starts, func, tolerance = 10^-8, maxSteps=100, lineSe
   
     # 4) calculate iBk, inverse approximate Hessian
     # DFP:
-    y <- y_list[[1]]
-    s <- s_list[[1]]
+    y  <- y_list[[1]]
+    s  <- s_list[[1]]
     iB <- iB_list[[1]]
     iB_next <- iB + s %*% t(s) / c(t(s) %*% y) - iB %*% y %*% t(y) %*% iB / c(t(y) %*% iB %*% y)
     

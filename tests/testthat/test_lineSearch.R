@@ -11,8 +11,8 @@ test_that("lineSearch_NAPA movement", {
                                nit = nit,
                                l_s_c=NULL,
                                p_s_c=NULL,
-                               K=matrix(rep(20,3)),
-                               red=matrix(rep(1,3)))
+                               K=matrix(rep(20,3), nrow=3, ncol=5),
+                               red=matrix(rep(1,3), nrow=3, ncol=5))
     }
     
     x0 <- c(log(25),0)

@@ -84,6 +84,7 @@ lineSearch_NAPA <- function(x_curr, dk, func, grad_Fx=NULL, stepMod=0, tolerance
       }
     }
   }
+  
   if(f_next > f_curr) stop("ERROR: lineSearch returned larger function value")
   return(list(x_next=x_best, f_next=f_best, iterations=lineSearchSteps))
 }

@@ -56,25 +56,25 @@ optim_DFP_APA(starts=0, func=quadratic, center=10, precBits = 64)
 ```
 ## $x
 ## 'mpfrMatrix' of dim(.) =  (1, 1) of precision  64   bits 
-##      [,1]                 
-## [1,] 10.000000000000000000
+##      [,1]                  
+## [1,] 9.99999999996157024670
 ## 
 ## $f
 ## 'mpfrMatrix' of dim(.) =  (1, 1) of precision  64   bits 
-##      [,1]                 
-## [1,] 0.0000000000000000000
+##      [,1]                      
+## [1,] 1.47684593894512519704e-21
 ## 
 ## $grad
 ## 1 'mpfr' number of precision  64   bits 
-## [1] 0
+## [1] -7.68595066064081677837e-11
 ## 
 ## $inv_Hessian
 ## 'mpfrMatrix' of dim(.) =  (1, 1) of precision  64   bits 
-##      [,1]                  
-## [1,] 0.50000000000226056695
+##      [,1]                   
+## [1,] 0.500000000000000000000
 ## 
 ## $steps
-## [1] 3
+## [1] 4
 ## 
 ## $converged
 ## [1] TRUE
@@ -100,18 +100,18 @@ optim_DFP_NAPA(starts=0, func=quadratic_NAPA, center=10)
 ## [1,]   10
 ## 
 ## $f
-##      [,1]
-## [1,]    0
+##              [,1]
+## [1,] 4.416905e-20
 ## 
 ## $grad
-## [1] 0
+## [1] 4.203287e-10
 ## 
 ## $inv_Hessian
 ##      [,1]
 ## [1,]  0.5
 ## 
 ## $steps
-## [1] 3
+## [1] 2
 ## 
 ## $converged
 ## [1] TRUE
@@ -156,7 +156,7 @@ op <- optim_DFP_NAPA(starts=0, func=quadratic_NAPA, center=10, keepValues = TRUE
 plotConvergence(op) + ggtitle("Convergence Path")
 ```
 
-![](README_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-4-1.png)<!-- -->![](README_files/figure-html/unnamed-chunk-4-2.png)<!-- -->
 
 And the same for the APA version:
 
@@ -170,3 +170,12 @@ plotConvergence(op)
 ```
 
 ![](README_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+
+
+
+# How to Cite
+
+Parker, M.R.P. (2020). optimizeAPA: An R Package for Arbitrary Precision Optimization of Multi-parameter Functions. R package version 1.0.1. https://github.com/mrparker909/optimizeAPA
+
+

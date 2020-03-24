@@ -96,10 +96,10 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
     tolerance <- Rmpfr::mpfr(tolerance, precBits)
   }
   if(tolerance >=1) {
-    stop("ERROR: tolerance is larger than 1")
+    stop("ERROR: tolerance is larger than 1, must be between 0 and 1")
   }
   if(tolerance <=0) {
-    stop("ERROR: tolerance is less than or equal to 0")
+    stop("ERROR: tolerance is less than or equal to 0, must be between 0 and 1")
   }
   
   ten <- Rmpfr::mpfr(10, precBits=precBits)
@@ -134,12 +134,12 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
     p_list <- updateList(pk, p_list, M = Memory)
     
     # 2) line search to find step size t ~= argmin_t f(xk + t*pk)
-    ls <- lineSearch_APA(x_curr = x_list[[1]], 
-                         dk = p_list[[1]], 
-                         func = func,
-                         grad_Fx = g_list[[1]],
+    ls <- lineSearch_APA(x_curr   = x_list[[1]], 
+                         dk       = p_list[[1]], 
+                         func     = func,
+                         grad_Fx  = g_list[[1]],
                          precBits = precBits,
-                         stepMod = steps,
+                         stepMod  = steps,
                          lineSearchMaxSteps = lineSearchMaxSteps, ...)
     f_next <- ls$f_next
     x_next <- ls$x_next
@@ -161,15 +161,15 @@ optim_DFP_APA <- function(starts, func, tolerance=10^-10, precBits = 64, maxStep
     }
     # 4) calculate iBk, inverse approximate Hessian
     # DFP:
-    y <- y_list[[1]]
-    s <- s_list[[1]]
+    y  <- y_list[[1]]
+    s  <- s_list[[1]]
     iB <- iB_list[[1]]
     
     iB_next <- NULL
     if(t(y)%*%y==0 | t(s)%*%s==0) {
       iB_next <- iB_list[[1]]
     } else {
-      iB_next <- iB + (s %*% t(s)) / c(t(s) %*% y) - (iB %*% y %*% t(y) %*% iB) / c(t(y) %*% iB %*% y)
+      iB_next <- iB + s %*% t(s) / c(t(s) %*% y) - iB %*% y %*% t(y) %*% iB / c(t(y) %*% iB %*% y)
     }
     
     if(any(is.na(iB_next))) { 
