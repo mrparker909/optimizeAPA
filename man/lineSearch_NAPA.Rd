@@ -4,8 +4,16 @@
 \alias{lineSearch_NAPA}
 \title{lineSearch_NAPA}
 \usage{
-lineSearch_NAPA(x_curr, dk, func, grad_Fx = NULL, stepMod = 0,
-  tolerance = 10^-8, lineSearchMaxSteps = 10, ...)
+lineSearch_NAPA(
+  x_curr,
+  dk,
+  func,
+  grad_Fx = NULL,
+  stepMod = 0,
+  tolerance = 10^-8,
+  lineSearchMaxSteps = 10,
+  ...
+)
 }
 \arguments{
 \item{x_curr}{starting x value}

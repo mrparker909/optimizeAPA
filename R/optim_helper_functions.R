@@ -156,6 +156,7 @@ dbinom_APA <- function(x, size, prob, precBits=128) {
 #' @param variable Default is NULL, will print convergence plot for all variables, otherwise an integer vector (such as c(1,3)) indicating which variables to print convergence plot for.
 #' @param digits Default is 5. Number of digits to print on convergence plot.
 #' @param labels If TRUE, print function values as labels on the plot.
+#' @param flip_axes If TRUE, will plot the convergence horizontally rather than vertically.
 #' @examples 
 #' # N dimensional quadratic
 #' funcND <- function(par, center, precBits=64) {
@@ -164,7 +165,7 @@ dbinom_APA <- function(x, size, prob, precBits=128) {
 #' } 
 #' opt <- optimizeAPA::optim_DFP_APA(starts = c(0,0,0), func = funcND, center=c(1,2,3), keepValues=TRUE)
 #' plotConvergence(opt, variable=c(1,3), labels=F)
-plotConvergence <- function(optimOutput, variable=NULL, digits=5, labels=T) {
+plotConvergence <- function(optimOutput, variable=NULL, digits=5, labels=T, flip_axes=F) {
   require(ggplot2)
   op <- optimOutput
   len <- length(op$f)
@@ -207,8 +208,26 @@ plotConvergence <- function(optimOutput, variable=NULL, digits=5, labels=T) {
     xlab("Visited x Values") + ylab("Algorithm Step") +
     ggtitle("Convergence Path") + theme_classic() + scale_y_continuous(breaks=1:op$steps)
   
+  if(flip_axes) {
+    p <- ggplot(data=dat, aes(group=par)) + 
+      geom_path(aes(x=xv, y=steps),
+                arrow = arrow(length=unit(0.03,"npc"), angle=40, ends="first", type = "closed"), color="forestgreen", size=1.25) +
+      geom_point(aes(x=xv, y=steps, color=FunctionValue), size=2.75) +
+      facet_grid(par~., scales = "free") +
+      geom_text(data = dat_text,
+                mapping = aes(x = -Inf, y = op$steps+1, label = label),
+                hjust   = -0.5) +
+      xlab("Visited x Values") + ylab("Algorithm Step") +
+      ggtitle("Convergence Path") + 
+      theme_classic() + 
+      scale_y_continuous(breaks=1:op$steps) +
+      coord_flip()
+  }
+  
   if(labels) {
-    p <- p + geom_label(aes(label=format(FunctionValue,digits=digits), x=xv, y=steps+0.5), size=2, alpha=0.6)
+    ANGLE=0
+    if(flip_axes) { ANGLE=90 }
+    p <- p + geom_text(aes(label=format(FunctionValue,digits=digits), x=xv, y=steps+0.5), size=4, angle = ANGLE)
   }
   
   plot(p)

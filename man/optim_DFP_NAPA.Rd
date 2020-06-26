@@ -4,9 +4,17 @@
 \alias{optim_DFP_NAPA}
 \title{optim_DFP_NAPA}
 \usage{
-optim_DFP_NAPA(starts, func, tolerance = 10^-8, maxSteps = 100,
-  lineSearchMaxSteps = 100, keepValues = FALSE, Memory = 100,
-  outFile = NULL, ...)
+optim_DFP_NAPA(
+  starts,
+  func,
+  tolerance = 10^-8,
+  maxSteps = 100,
+  lineSearchMaxSteps = 100,
+  keepValues = FALSE,
+  Memory = 100,
+  outFile = NULL,
+  ...
+)
 }
 \arguments{
 \item{starts}{vector of starting values for the function parameters}

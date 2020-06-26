@@ -4,7 +4,13 @@
 \alias{plotConvergence}
 \title{plotConvergence}
 \usage{
-plotConvergence(optimOutput, variable = NULL, digits = 5, labels = T)
+plotConvergence(
+  optimOutput,
+  variable = NULL,
+  digits = 5,
+  labels = T,
+  flip_axes = F
+)
 }
 \arguments{
 \item{optimOutput}{The result of running an optimization algorithm with keepValues=TRUE}
@@ -14,6 +20,8 @@ plotConvergence(optimOutput, variable = NULL, digits = 5, labels = T)
 \item{digits}{Default is 5. Number of digits to print on convergence plot.}
 
 \item{labels}{If TRUE, print function values as labels on the plot.}
+
+\item{flip_axes}{If TRUE, will plot the convergence horizontally rather than vertically.}
 }
 \description{
 Plot the path to convergence of an optimization algorithm (such as optim_DFP_APA).
